@@ -1,0 +1,37 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Secrets are marked sync: false — enter them in the Render dashboard, never in this file.
+services:
+  - type: web
+    name: sidequest
+    runtime: node
+    # Free plan sleeps after inactivity (slow first load for judges).
+    # Switch to "starter" for the judging period (Dec 1–15).
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: PAYPAL_ENVIRONMENT
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: OPERATOR_A_EMAIL
+        sync: false
+      - key: OPERATOR_B_EMAIL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: MCP_AGENT_API_KEY
+        sync: false
+      - key: APP_BASE_URL
+        sync: false

@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* SIDEQUEST palette (spec Section 11.1). Dark-first. */
+:root {
+  --background: #0c111b;
+  --surface: #192536;
+  --surface-2: #24344b;
+  --accent: #6ee7b7;
+  --foreground: #ffffff;
+  --muted: #94a3b8;
+  --warning: #f6c56d;
+  --error: #f87171;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-accent: var(--accent);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}

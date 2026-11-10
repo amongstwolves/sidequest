@@ -1,0 +1,26 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+/build
+*.tsbuildinfo
+next-env.d.ts
+
+# env files — never commit secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# local state
+scripts/.sandbox-state.json
+scripts/__pycache__/
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+/coverage
+.vercel

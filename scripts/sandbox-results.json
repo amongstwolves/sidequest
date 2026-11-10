@@ -1,0 +1,197 @@
+[
+  {
+    "command": "token",
+    "ran_at": "2026-11-07T08:56:38.314694+00:00",
+    "steps": [
+      {
+        "step": "OAuth token",
+        "ok": true,
+        "detail": "app_id APP-44721677CK623741J, 29 scopes"
+      },
+      {
+        "step": "Payouts scope granted",
+        "ok": false,
+        "detail": "enable 'Payouts' on the sandbox REST app in the PayPal developer dashboard"
+      }
+    ]
+  },
+  {
+    "command": "payouts",
+    "ran_at": "2026-11-07T08:56:38.569926+00:00",
+    "steps": [
+      {
+        "step": "OAuth token",
+        "ok": true,
+        "detail": "app_id APP-44721677CK623741J, 29 scopes"
+      },
+      {
+        "step": "Payouts scope granted",
+        "ok": false,
+        "detail": "enable 'Payouts' on the sandbox REST app in the PayPal developer dashboard"
+      },
+      {
+        "step": "Payouts batch",
+        "ok": false,
+        "detail": "set OPERATOR_A_EMAIL and OPERATOR_B_EMAIL in .env.local"
+      }
+    ]
+  },
+  {
+    "command": "token",
+    "ran_at": "2026-11-07T08:56:51.436810+00:00",
+    "steps": [
+      {
+        "step": "OAuth token",
+        "ok": true,
+        "detail": "app_id APP-44721677CK623741J, 29 scopes"
+      },
+      {
+        "step": "Payouts scope granted",
+        "ok": true,
+        "detail": "https://uri.paypal.com/payments/payouts"
+      }
+    ]
+  },
+  {
+    "command": "payouts",
+    "ran_at": "2026-11-07T09:05:15.046047+00:00",
+    "steps": [
+      {
+        "step": "OAuth token",
+        "ok": true,
+        "detail": "app_id APP-44721677CK623741J, 29 scopes"
+      },
+      {
+        "step": "Payouts scope granted",
+        "ok": true,
+        "detail": "https://uri.paypal.com/payments/payouts"
+      },
+      {
+        "step": "Payouts batch created",
+        "ok": true,
+        "detail": "PENDING",
+        "payout_batch_id": "RTV53A857JGAW"
+      },
+      {
+        "step": "Payouts batch final status",
+        "ok": true,
+        "detail": "SUCCESS"
+      },
+      {
+        "step": "Payout item A",
+        "ok": true,
+        "detail": "SUCCESS",
+        "payout_item_id": "QCN7S32M2VZSW"
+      },
+      {
+        "step": "Payout item B",
+        "ok": true,
+        "detail": "SUCCESS",
+        "payout_item_id": "2K52VQJP45YZJ"
+      }
+    ]
+  },
+  {
+    "command": "order-create",
+    "ran_at": "2026-11-07T09:05:18.834635+00:00",
+    "steps": [
+      {
+        "step": "OAuth token",
+        "ok": true,
+        "detail": "app_id APP-44721677CK623741J, 29 scopes"
+      },
+      {
+        "step": "Payouts scope granted",
+        "ok": true,
+        "detail": "https://uri.paypal.com/payments/payouts"
+      },
+      {
+        "step": "Order created (AUTHORIZE)",
+        "ok": true,
+        "detail": "PAYER_ACTION_REQUIRED",
+        "order_id": "815555547U982183K"
+      }
+    ]
+  },
+  {
+    "command": "order-finish",
+    "ran_at": "2026-11-07T09:12:00.769451+00:00",
+    "steps": [
+      {
+        "step": "OAuth token",
+        "ok": true,
+        "detail": "app_id APP-44721677CK623741J, 29 scopes"
+      },
+      {
+        "step": "Payouts scope granted",
+        "ok": true,
+        "detail": "https://uri.paypal.com/payments/payouts"
+      },
+      {
+        "step": "Order approved by buyer",
+        "ok": true,
+        "detail": "",
+        "order_id": "815555547U982183K"
+      },
+      {
+        "step": "Authorize (funds held)",
+        "ok": true,
+        "detail": "CREATED $75.00",
+        "authorization_id": "91R77066VK2547948"
+      },
+      {
+        "step": "Partial capture \u2014 mission A ($30)",
+        "ok": true,
+        "detail": "COMPLETED",
+        "capture_id": "3JP53470TH068301L",
+        "debug_id": "f549715c4b116"
+      },
+      {
+        "step": "Idempotent replay returns same capture",
+        "ok": true,
+        "detail": "no duplicate charge"
+      },
+      {
+        "step": "Partial capture \u2014 mission B ($35)",
+        "ok": true,
+        "detail": "COMPLETED",
+        "capture_id": "2NP786070N720901X",
+        "debug_id": "f842978d50be8"
+      },
+      {
+        "step": "Void remaining authorization ($10 unused)",
+        "ok": true,
+        "detail": "voided",
+        "debug_id": "f446304a51fca"
+      },
+      {
+        "step": "Authorization final state",
+        "ok": true,
+        "detail": "VOIDED"
+      },
+      {
+        "step": "Payouts batch created",
+        "ok": true,
+        "detail": "PENDING",
+        "payout_batch_id": "WQ7L6ASX4UE8N"
+      },
+      {
+        "step": "Payouts batch final status",
+        "ok": true,
+        "detail": "SUCCESS"
+      },
+      {
+        "step": "Payout item A",
+        "ok": true,
+        "detail": "SUCCESS",
+        "payout_item_id": "PDEQNQRGAUDC4"
+      },
+      {
+        "step": "Payout item B",
+        "ok": true,
+        "detail": "SUCCESS",
+        "payout_item_id": "G83ZTXX75QVM6"
+      }
+    ]
+  }
+]
