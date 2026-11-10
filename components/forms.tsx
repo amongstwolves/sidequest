@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { approvePlanAction, createObjectiveAction, type FormState } from "@/app/actions/objectives";
-import { acceptMissionAction, type AcceptState } from "@/app/actions/missions";
+import { acceptMissionAction, approveMissionAction, retryPaymentAction, syncPayoutAction, type AcceptState } from "@/app/actions/missions";
 
 const EXAMPLE =
   "Our new autumn counter display should be up at Café A and Café B. Get a photo of each display with the price card readable, plus the storefront so we know it's the right location.";
@@ -68,7 +68,7 @@ export function ApprovePlanButton({ objectiveId, totalLabel }: { objectiveId: st
     <form action={action} className="space-y-2">
       <input type="hidden" name="objective_id" value={objectiveId} />
       <button type="submit" disabled={pending} className="w-full rounded-lg bg-accent px-4 py-2.5 font-semibold text-background disabled:opacity-60 sm:w-auto">
-        {pending ? "Publishing…" : `Approve plan · ${totalLabel}`}
+        {pending ? "Opening PayPal…" : `Approve & hold ${totalLabel} with PayPal`}
       </button>
       {state.error && <p role="alert" className="text-sm text-error">{state.error}</p>}
     </form>
@@ -86,4 +86,44 @@ export function AcceptMissionButton({ missionId }: { missionId: string }) {
       {state.error && <p role="alert" className="rounded-lg bg-error/15 px-3 py-2 text-sm text-error">{state.error}</p>}
     </form>
   );
+}
+
+export function ApproveMissionButton({ missionId, amountLabel }: { missionId: string; amountLabel: string }) {
+  const [state, action, pending] = useActionState<AcceptState, FormData>(approveMissionAction, {});
+  return (
+    <form action={action} className="space-y-2">
+      <input type="hidden" name="mission_id" value={missionId} />
+      <button type="submit" disabled={pending || state.ok} className="w-full rounded-lg bg-accent px-4 py-2.5 font-semibold text-background disabled:opacity-60 sm:w-auto">
+        {pending ? "Capturing and paying out…" : `Approve & pay ${amountLabel}`}
+      </button>
+      {state.error && <p role="alert" className="rounded-lg bg-error/15 px-3 py-2 text-sm text-error">{state.error}</p>}
+    </form>
+  );
+}
+
+export function RetryPaymentButton({ obligationId, label }: { obligationId: string; label: string }) {
+  const [state, action, pending] = useActionState<AcceptState, FormData>(retryPaymentAction, {});
+  return (
+    <form action={action} className="space-y-2">
+      <input type="hidden" name="obligation_id" value={obligationId} />
+      <button type="submit" disabled={pending} className="rounded-lg border border-surface-2 px-3 py-1.5 text-sm hover:border-accent hover:text-accent disabled:opacity-60">
+        {pending ? "Checking PayPal…" : label}
+      </button>
+      {state.error && <p role="alert" className="text-sm text-error">{state.error}</p>}
+    </form>
+  );
+}
+
+/** Polls PayPal while a sandbox payout is pending (they usually settle within a minute). */
+export function PayoutAutoCheck({ obligationId }: { obligationId: string }) {
+  const [checks, setChecks] = useState(0);
+  useEffect(() => {
+    if (checks >= 24) return; // stop after ~2 minutes; the manual button remains
+    const t = setTimeout(async () => {
+      const settled = await syncPayoutAction(obligationId).catch(() => false);
+      if (!settled) setChecks((c) => c + 1);
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [checks, obligationId]);
+  return <p className="text-xs text-muted" aria-live="polite">Waiting for PayPal to confirm the payout… checking every 5 seconds.</p>;
 }

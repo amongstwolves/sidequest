@@ -1,9 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { refresh } from "next/cache";
 import { currentPersona } from "@/lib/demo/personas";
-import { approvePlan, createObjective, TransitionError } from "@/lib/objectives";
+import { createObjective, TransitionError } from "@/lib/objectives";
+import { PayPalError } from "@/lib/payments/paypal";
+import { startFunding } from "@/lib/payments/flow";
 import { toMinor } from "@/lib/money";
 
 export type FormState = { error?: string };
@@ -37,15 +39,26 @@ export async function createObjectiveAction(_prev: FormState, formData: FormData
   redirect(`/objectives/${id}`);
 }
 
+/** Where PayPal sends the buyer back. APP_BASE_URL wins; otherwise the request's own origin. */
+async function baseUrl(): Promise<string> {
+  if (process.env.APP_BASE_URL) return process.env.APP_BASE_URL.replace(/\/$/, "");
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
+/** Approve the plan: create the PayPal AUTHORIZE order and send the requester to approve the hold. */
 export async function approvePlanAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const persona = await currentPersona();
   const objectiveId = String(formData.get("objective_id") ?? "");
+  let approveUrl: string;
   try {
-    await approvePlan(objectiveId, persona.userId, { type: "human", id: persona.userId });
+    approveUrl = await startFunding(objectiveId, persona.userId, await baseUrl());
   } catch (err) {
     if (err instanceof TransitionError) return { error: err.message };
+    if (err instanceof PayPalError) return { error: `PayPal: ${err.message}` };
     throw err;
   }
-  refresh();
-  return {};
+  redirect(approveUrl);
 }

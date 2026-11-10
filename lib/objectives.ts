@@ -107,45 +107,6 @@ export async function createObjective(input: CreateObjectiveInput): Promise<{ id
 
 export class TransitionError extends Error {}
 
-/** Requester approves the plan: missions are created and published. (PayPal authorization gate comes next.) */
-export async function approvePlan(objectiveId: string, requesterId: string, actor: { type: ActorType; id: string }) {
-  await db().begin(async (tx) => {
-    const [obj] = await tx<{ state: string; requester_id: string; deadline: Date }[]>`
-      select state, requester_id, deadline from objectives where id = ${objectiveId} for update`;
-    if (!obj) throw new TransitionError("Objective not found.");
-    if (obj.requester_id !== requesterId) throw new TransitionError("Only the requester can approve this plan.");
-    if (obj.state !== "AWAITING_APPROVAL") throw new TransitionError(`Plan can't be approved from state ${obj.state}.`);
-
-    const [plan] = await tx<{ id: string; plan_json: StoredPlan }[]>`
-      select id, plan_json from mission_plans
-      where objective_id = ${objectiveId} and approval_state = 'PENDING'
-      order by version desc limit 1`;
-    if (!plan) throw new TransitionError("No pending plan.");
-
-    for (const m of plan.plan_json.missions) {
-      await tx`
-        insert into missions (objective_id, plan_id, category, title, description, location_id, lat, lng,
-                              reward_minor, deadline, required_capabilities, rubric_json, state, ai_created)
-        select ${objectiveId}, ${plan.id}, ${m.category}, ${m.title}, ${m.description}, l.id, l.lat, l.lng,
-               ${m.reward_minor}, ${obj.deadline}, ${m.required_capabilities}, ${tx.json({ items: m.rubric, safety_notes: m.safety_notes } as never)},
-               'PUBLISHED', ${plan.plan_json.usedFallback ? false : true}
-        from locations l where l.id = ${m.location_id}`;
-    }
-    await tx`update mission_plans set approval_state = 'APPROVED' where id = ${plan.id}`;
-    await tx`update objectives set state = 'PUBLISHED', updated_at = now() where id = ${objectiveId}`;
-    await audit(tx, {
-      actorType: actor.type,
-      actorId: actor.id,
-      action: "plan.approved",
-      resourceType: "objective",
-      resourceId: objectiveId,
-      beforeState: "AWAITING_APPROVAL",
-      afterState: "PUBLISHED",
-      metadata: { missions: plan.plan_json.missions.length },
-    });
-  });
-}
-
 export type ObjectiveRow = {
   id: string;
   request_text: string;

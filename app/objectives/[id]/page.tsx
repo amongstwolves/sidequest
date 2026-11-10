@@ -7,14 +7,21 @@ import { Card, formatDeadline, Money, StateBadge } from "@/components/ui";
 import { currentPersona } from "@/lib/demo/personas";
 import { formatUsd } from "@/lib/money";
 import { getObjective, listLocations } from "@/lib/objectives";
+import { getFunding, getLedger, providerId } from "@/lib/payments/queries";
 
-export default function ObjectivePage({ params }: PageProps<"/objectives/[id]">) {
+export default function ObjectivePage({ params, searchParams }: PageProps<"/objectives/[id]">) {
   return (
     <Suspense fallback={<Card className="h-96" />}>
-      <Objective params={params} />
+      <Objective params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
+
+const FUNDING_NOTICE: Record<string, { text: string; style: string }> = {
+  authorized: { text: "PayPal approved the hold. Missions are now published to nearby operators.", style: "bg-accent/15 text-accent" },
+  cancelled: { text: "PayPal checkout was cancelled. Nothing was held; you can approve again.", style: "bg-warning/15 text-warning" },
+  error: { text: "PayPal couldn't authorize the hold. Try approving again.", style: "bg-error/15 text-error" },
+};
 
 const DECISION_STYLE: Record<string, string> = {
   ALLOW: "text-accent",
@@ -23,10 +30,17 @@ const DECISION_STYLE: Record<string, string> = {
   REJECT: "text-error",
 };
 
-async function Objective({ params }: Pick<PageProps<"/objectives/[id]">, "params">) {
+async function Objective({ params, searchParams }: Pick<PageProps<"/objectives/[id]">, "params" | "searchParams">) {
   await connection();
   const { id } = await params;
-  const [data, persona, locations] = await Promise.all([getObjective(id), currentPersona(), listLocations()]);
+  const notice = FUNDING_NOTICE[String((await searchParams).funding ?? "")];
+  const [data, persona, locations, funding, ledger] = await Promise.all([
+    getObjective(id),
+    currentPersona(),
+    listLocations(),
+    getFunding(id),
+    getLedger(id),
+  ]);
   const locationName = new Map(locations.map((l) => [l.id, l.name]));
   if (!data) notFound();
   const { objective, plan, missions, activity } = data;
@@ -36,6 +50,7 @@ async function Objective({ params }: Pick<PageProps<"/objectives/[id]">, "params
 
   return (
     <div className="space-y-6">
+      {notice && <p role="status" className={`rounded-lg px-4 py-3 text-sm ${notice.style}`}>{notice.text}</p>}
       <div className="space-y-2">
         <Link href="/" className="text-sm text-muted hover:text-foreground">← Objectives</Link>
         <div className="flex flex-wrap items-center gap-3">
@@ -99,7 +114,12 @@ async function Objective({ params }: Pick<PageProps<"/objectives/[id]">, "params
               <div><dt className="text-muted">Proposed rewards</dt><dd><Money minor={total} /></dd></div>
               <div><dt className="text-muted">Unspent budget</dt><dd><Money minor={Math.max(0, objective.budget_minor - total)} /></dd></div>
             </dl>
-            {canApprove && <ApprovePlanButton objectiveId={objective.id} totalLabel={formatUsd(total)} />}
+            {canApprove && (
+              <div className="space-y-1">
+                <ApprovePlanButton objectiveId={objective.id} totalLabel={formatUsd(objective.budget_minor)} />
+                <p className="text-xs text-muted">Holds the full budget in PayPal sandbox; each mission captures its reward, the rest is released.</p>
+              </div>
+            )}
           </Card>
           {(plan.plan_json.assumptions.length > 0 || plan.plan_json.warnings.length > 0) && (
             <div className="grid gap-3 text-sm md:grid-cols-2">
@@ -130,6 +150,49 @@ async function Objective({ params }: Pick<PageProps<"/objectives/[id]">, "params
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {funding && (
+        <section className="space-y-3" aria-labelledby="payments-heading">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 id="payments-heading" className="text-lg font-semibold">PayPal</h2>
+            <StateBadge state={funding.state} />
+            <span className="text-xs text-muted">sandbox</span>
+          </div>
+          <Card className="grid gap-4 text-sm sm:grid-cols-4">
+            <div><p className="text-muted">Held</p><Money minor={funding.state === "CREATED" ? 0 : funding.amount_minor} className="text-lg" /></div>
+            <div><p className="text-muted">Captured</p><Money minor={funding.captured_minor} className="text-lg" /></div>
+            <div>
+              <p className="text-muted">{funding.state === "VOIDED" ? "Released" : "Still held"}</p>
+              <Money minor={["AUTHORIZED", "PARTIALLY_CAPTURED", "VOIDED"].includes(funding.state) ? funding.amount_minor - funding.captured_minor : 0} className="text-lg" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-muted">Order / authorization</p>
+              <p className="truncate font-mono text-xs">{funding.provider_order_id ?? "—"}</p>
+              <p className="truncate font-mono text-xs">{funding.provider_authorization_id ?? "awaiting buyer approval"}</p>
+            </div>
+          </Card>
+          {ledger.length > 0 && (
+            <div className="overflow-x-auto rounded-xl bg-surface">
+              <table className="w-full min-w-[36rem] text-left text-sm">
+                <thead className="text-xs uppercase tracking-wider text-muted">
+                  <tr><th className="px-4 py-2">Step</th><th className="px-4 py-2">Mission</th><th className="px-4 py-2">Amount</th><th className="px-4 py-2">PayPal ID</th><th className="px-4 py-2">Status</th></tr>
+                </thead>
+                <tbody className="divide-y divide-surface-2">
+                  {ledger.map((t) => (
+                    <tr key={t.id}>
+                      <td className="px-4 py-2 font-medium">{t.operation.replace("_", " ").toLowerCase()}</td>
+                      <td className="px-4 py-2 text-muted">{t.mission_title ?? "—"}</td>
+                      <td className="px-4 py-2">{t.amount_minor != null ? <Money minor={t.amount_minor} /> : "—"}</td>
+                      <td className="px-4 py-2 font-mono text-xs">{providerId(t)}</td>
+                      <td className="px-4 py-2 font-mono text-xs">{t.state}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 

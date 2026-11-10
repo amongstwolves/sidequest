@@ -2,11 +2,13 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { AcceptMissionButton } from "@/components/forms";
+import { AcceptMissionButton, ApproveMissionButton, PayoutAutoCheck, RetryPaymentButton } from "@/components/forms";
 import { AiBadge, Card, formatDeadline, Money, StateBadge } from "@/components/ui";
 import { currentPersona } from "@/lib/demo/personas";
 import { formatDistance } from "@/lib/geo";
 import { getMission, matchesFor } from "@/lib/missions";
+import { formatUsd } from "@/lib/money";
+import { getObligationForMission } from "@/lib/payments/queries";
 
 export default function MissionPage({ params }: PageProps<"/missions/[id]">) {
   return (
@@ -21,7 +23,7 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
   const { id } = await params;
   const [m, persona] = await Promise.all([getMission(id), currentPersona()]);
   if (!m) notFound();
-  const matches = await matchesFor(m);
+  const [matches, obligation] = await Promise.all([matchesFor(m), getObligationForMission(m.id)]);
   const isOperator = persona.key !== "requester";
   const myMatch = matches.find((r) => r.operator.user_id === persona.userId);
   const mine = m.assignee_id === persona.userId;
@@ -65,6 +67,34 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
           Requested by {m.requester_name}
           {m.agent_name ? ` through its AI agent (${m.agent_name})` : ""}.
         </p>
+
+        {!isOperator && ["EVIDENCE_SUBMITTED", "UNDER_REVIEW"].includes(m.state) && (
+          <Card className="space-y-3">
+            <p>Proof is in. Approving captures this mission&apos;s reward from the PayPal hold and pays {m.assignee_name} through PayPal Payouts.</p>
+            <ApproveMissionButton missionId={m.id} amountLabel={formatUsd(m.reward_minor)} />
+          </Card>
+        )}
+
+        {obligation && (
+          <Card className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-semibold">Payment to {m.assignee_name}</h2>
+              <StateBadge state={obligation.status} />
+            </div>
+            <dl className="grid gap-3 text-sm sm:grid-cols-3">
+              <div><dt className="text-muted">Amount</dt><dd><Money minor={obligation.amount_minor} /></dd></div>
+              <div className="min-w-0"><dt className="text-muted">PayPal capture</dt><dd className="truncate font-mono text-xs">{obligation.capture_id ?? "—"}</dd></div>
+              <div className="min-w-0">
+                <dt className="text-muted">PayPal payout</dt>
+                <dd className="truncate font-mono text-xs">{obligation.payout_item_id ?? obligation.payout_batch_id ?? "—"}</dd>
+                {obligation.payout_state && <dd className="font-mono text-xs text-muted">{obligation.payout_state}</dd>}
+              </div>
+            </dl>
+            {obligation.status === "PAYOUT_PENDING" && <PayoutAutoCheck obligationId={obligation.id} />}
+            {!isOperator && obligation.status === "PAYOUT_PENDING" && <RetryPaymentButton obligationId={obligation.id} label="Check payout status" />}
+            {!isOperator && obligation.status === "PAYMENT_FAILED" && <RetryPaymentButton obligationId={obligation.id} label="Retry payment" />}
+          </Card>
+        )}
 
         {isOperator && (
           <Card className="space-y-3">
