@@ -21,9 +21,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Demo environment · PayPal sandbox · all brands, venues and people are fictional
         </div>
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-2 px-4 py-3 sm:px-6">
-          <Link href="/" className="text-lg font-bold tracking-[0.2em]">
-            SIDE<span className="text-accent">QUEST</span>
-          </Link>
+          <nav aria-label="Main" className="flex items-center gap-5">
+            <Link href="/" className="text-lg font-bold tracking-[0.2em]">
+              SIDE<span className="text-accent">QUEST</span>
+            </Link>
+            <Link href="/discover" className="text-sm text-muted hover:text-foreground">Missions</Link>
+            <Link href="/objectives/new" className="text-sm text-muted hover:text-foreground">New objective</Link>
+          </nav>
           <Suspense fallback={<RoleSwitcherFallback />}>
             <RoleSwitcher />
           </Suspense>

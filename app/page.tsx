@@ -1,7 +1,12 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { currentPersona } from "@/lib/demo/personas";
+import Link from "next/link";
+import { resetDemoAction } from "@/app/actions/demo";
+import { Card, formatDeadline, Money, StateBadge } from "@/components/ui";
 import { getHealth, type HealthStatus } from "@/lib/health";
+import { isDatabaseConfigured } from "@/lib/db";
+import { listObjectives } from "@/lib/objectives";
 
 const FLOW = [
   { step: "Objective", detail: "A person or AI agent describes the outcome and budget." },
@@ -25,6 +30,19 @@ export default function Home() {
         </Suspense>
       </section>
 
+      <section aria-labelledby="objectives-heading" className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="objectives-heading" className="text-lg font-semibold">Objectives</h2>
+          <div className="flex gap-2">
+            <Link href="/discover" className="rounded-lg bg-surface px-4 py-2 text-sm font-semibold hover:bg-surface-2">Missions</Link>
+            <Link href="/objectives/new" className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-background">New objective</Link>
+          </div>
+        </div>
+        <Suspense fallback={<Card className="h-24" />}>
+          <Objectives />
+        </Suspense>
+      </section>
+
       <section aria-labelledby="flow-heading" className="space-y-4">
         <h2 id="flow-heading" className="text-lg font-semibold">How a mission flows</h2>
         <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -43,8 +61,44 @@ export default function Home() {
         <Suspense fallback={<p className="text-muted">Checking services…</p>}>
           <SystemStatus />
         </Suspense>
+        <form action={resetDemoAction} className="flex flex-wrap items-center gap-3 text-sm">
+          <button type="submit" className="rounded-lg border border-surface-2 px-3 py-1.5 text-muted hover:border-warning hover:text-warning">
+            Reset demo
+          </button>
+          <span className="text-muted">Clears all objectives and missions and reloads the fictional seed data.</span>
+        </form>
       </section>
     </div>
+  );
+}
+
+async function Objectives() {
+  await connection();
+  if (!isDatabaseConfigured()) return <Card className="text-muted">Database not configured.</Card>;
+  const rows = await listObjectives();
+  if (rows.length === 0) {
+    return (
+      <Card className="text-muted">
+        No objectives yet. As the requester, <Link href="/objectives/new" className="text-accent hover:underline">describe one</Link> and Claude will plan the missions.
+      </Card>
+    );
+  }
+  return (
+    <ul className="divide-y divide-surface-2 rounded-xl bg-surface">
+      {rows.map((o) => (
+        <li key={o.id}>
+          <Link href={`/objectives/${o.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-surface-2/50">
+            <span className="min-w-0 flex-1">
+              <span className="line-clamp-1">{o.request_text}</span>
+              <span className="block text-sm text-muted">
+                {o.agent_id ? "AI agent · " : ""}{o.mission_count} missions · due {formatDeadline(o.deadline)}
+              </span>
+            </span>
+            <span className="flex items-center gap-3"><Money minor={o.budget_minor} /><StateBadge state={o.state} /></span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 

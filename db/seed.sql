@@ -30,7 +30,7 @@ insert into organization_members (organization_id, user_id, role) values
 -- (one is offline, one lacks photo capability, one is outside radius, two are viable runners-up).
 insert into operators (user_id, persona_key, availability, neighborhood, lat, lng, radius_meters, capabilities, reliability_score) values
   ('00000000-0000-4000-8000-0000000000a1', 'operator_a', 'available', 'Northgate Mill',  35.2452, -80.8105, 4000, '{photo,retail_display}',        0.94),
-  ('00000000-0000-4000-8000-0000000000b1', 'operator_b', 'available', 'Southline',       35.2105, -80.8588, 4000, '{photo,retail_display,event}',  0.91),
+  ('00000000-0000-4000-8000-0000000000b1', 'operator_b', 'available', 'Southline',       35.2105, -80.8588, 5000, '{photo,retail_display,event}',  0.91),
   ('00000000-0000-4000-8000-0000000000c1', null,         'available', 'Elm Plaza',       35.2201, -80.8126, 5000, '{photo}',                       0.78),
   ('00000000-0000-4000-8000-0000000000c2', null,         'offline',   'Northgate Mill',  35.2440, -80.8120, 4000, '{photo,retail_display}',        0.97),
   ('00000000-0000-4000-8000-0000000000c3', null,         'available', 'Southline',       35.2098, -80.8601, 3000, '{assist}',                      0.88),
