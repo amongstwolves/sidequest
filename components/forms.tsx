@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { approvePlanAction, createObjectiveAction, type FormState } from "@/app/actions/objectives";
-import { acceptMissionAction, approveMissionAction, retryPaymentAction, syncPayoutAction, type AcceptState } from "@/app/actions/missions";
+import { acceptMissionAction, approveMissionAction, retryPaymentAction, submitEvidenceAction, syncPayoutAction, type AcceptState, type ProofState } from "@/app/actions/missions";
 
 const EXAMPLE =
   "Our new autumn counter display should be up at Café A and Café B. Get a photo of each display with the price card readable, plus the storefront so we know it's the right location.";
@@ -126,4 +126,74 @@ export function PayoutAutoCheck({ obligationId }: { obligationId: string }) {
     return () => clearTimeout(t);
   }, [checks, obligationId]);
   return <p className="text-xs text-muted" aria-live="polite">Waiting for PayPal to confirm the payout… checking every 5 seconds.</p>;
+}
+
+/** Downscale to max 1600px JPEG in the browser so uploads stay small and EXIF location data is dropped. */
+async function shrink(file: File): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not read photo"))), "image/jpeg", 0.85),
+  );
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+}
+
+export function EvidenceUpload({ missionId, resubmit }: { missionId: string; resubmit: boolean }) {
+  const [state, action, pending] = useActionState<ProofState, FormData>(submitEvidenceAction, {});
+  const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
+  const [prepError, setPrepError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function onPick(list: FileList | null) {
+    setPrepError(null);
+    if (!list) return;
+    try {
+      const picked = await Promise.all([...list].slice(0, 4).map(shrink));
+      setPhotos(picked.map((file) => ({ file, url: URL.createObjectURL(file) })));
+    } catch {
+      setPrepError("One of those files couldn't be read as a photo.");
+    }
+  }
+
+  return (
+    <form
+      action={(fd) => {
+        fd.delete("photos");
+        photos.forEach((p) => fd.append("photos", p.file));
+        action(fd);
+      }}
+      className="space-y-3"
+    >
+      <input type="hidden" name="mission_id" value={missionId} />
+      <label className="block space-y-2">
+        <span className="font-semibold">{resubmit ? "Upload corrected photos" : "Upload proof photos"}</span>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          onChange={(e) => onPick(e.target.files)}
+          className="block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-2 file:px-3 file:py-2 file:text-foreground"
+        />
+        <span className="block text-xs text-muted">Up to 4 photos. They&apos;re resized on your device; location data is removed.</span>
+      </label>
+      {photos.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {photos.map((p) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={p.url} src={p.url} alt="Selected proof photo" className="aspect-square w-full rounded-lg object-cover" />
+          ))}
+        </div>
+      )}
+      {(prepError || state.error) && <p role="alert" className="rounded-lg bg-error/15 px-3 py-2 text-sm text-error">{prepError ?? state.error}</p>}
+      <button type="submit" disabled={pending || photos.length === 0} className="w-full rounded-lg bg-accent px-4 py-2.5 font-semibold text-background disabled:opacity-60 sm:w-auto">
+        {pending ? "Claude is checking your photos…" : "Submit proof"}
+      </button>
+    </form>
+  );
 }

@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { currentPersona } from "@/lib/demo/personas";
 import { acceptMission } from "@/lib/missions";
+import { submitEvidence } from "@/lib/evidence";
 import { TransitionError } from "@/lib/objectives";
 import { PayPalError } from "@/lib/payments/paypal";
 import { approveMissionAndPay, payObligation, syncPayout } from "@/lib/payments/flow";
@@ -55,4 +56,20 @@ export async function syncPayoutAction(obligationId: string): Promise<boolean> {
   const settled = await syncPayout(obligationId);
   if (settled) refresh();
   return settled;
+}
+
+export type ProofState = { error?: string; result?: string; message?: string };
+
+export async function submitEvidenceAction(_prev: ProofState, formData: FormData): Promise<ProofState> {
+  const persona = await currentPersona();
+  if (persona.key === "requester") return { error: "Switch to the operator who accepted this mission." };
+  const files = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  try {
+    const review = await submitEvidence(String(formData.get("mission_id") ?? ""), persona.userId, files);
+    refresh();
+    return { result: review.result, message: review.operatorMessage };
+  } catch (err) {
+    if (err instanceof TransitionError) return { error: err.message };
+    throw err;
+  }
 }

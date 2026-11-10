@@ -4,7 +4,7 @@
 
 truncate table
   notifications, audit_events, webhook_events, payment_transactions, payment_obligations,
-  funding_authorizations, evidence_reviews, evidence, assignments, mission_dependencies,
+  funding_authorizations, evidence_reviews, evidence_files, evidence, assignments, mission_dependencies,
   missions, mission_plans, objectives, locations, agent_policies, agent_principals,
   operators, organization_members, organizations, users
 restart identity cascade;
