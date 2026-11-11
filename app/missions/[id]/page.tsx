@@ -221,7 +221,7 @@ function SubmissionCard({ sub, latest }: { sub: Submission; latest: boolean }) {
           {r.privacy_concern && <p className="text-sm text-warning">Privacy: a face or personal detail appears in the photos.</p>}
           {r.summary && <p className="text-sm text-muted">{r.summary}</p>}
           <p className="text-xs text-muted">
-            {r.model && r.model !== "none" ? `AI review by ${r.model}. ` : ""}A recommendation only: photos can&apos;t prove when, where or by whom they were taken. The requester decides.
+            {r.model && r.model !== "none" ? "AI evaluation. " : ""}A recommendation only: photos can&apos;t prove when, where or by whom they were taken. The requester decides.
           </p>
         </>
       )}

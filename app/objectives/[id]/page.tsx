@@ -86,7 +86,7 @@ async function Objective({ params, searchParams }: Pick<PageProps<"/objectives/[
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="plan-heading" className="text-lg font-semibold">Plan v{plan.version}</h2>
             <p className="text-sm text-muted">
-              {plan.plan_json.usedFallback ? `Template plan (${plan.plan_json.fallbackReason})` : `Drafted by ${plan.model}`}
+              {plan.plan_json.usedFallback ? `Template plan (${plan.plan_json.fallbackReason})` : "Drafted by AI"}
             </p>
           </div>
           <p className="text-muted">{plan.plan_json.summary}</p>

@@ -79,7 +79,7 @@ async function Objectives() {
   if (rows.length === 0) {
     return (
       <Card className="text-muted">
-        No objectives yet. As the requester, <Link href="/objectives/new" className="text-accent hover:underline">describe one</Link> and Claude will plan the missions.
+        No objectives yet. As the requester, <Link href="/objectives/new" className="text-accent hover:underline">describe one</Link> and AI will plan the missions.
       </Card>
     );
   }

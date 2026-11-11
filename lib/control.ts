@@ -71,8 +71,8 @@ export async function missionRows(): Promise<MissionGridRow[]> {
 const ACTOR_LABEL: Record<string, string> = {
   paypal: "PayPal",
   policy_guardian: "Policy check",
-  mission_genesis: "Claude planner",
-  proof_engine: "Claude proof review",
+  mission_genesis: "AI planner",
+  proof_engine: "AI proof review",
   orchestrator: "Orchestrator",
   payment_agent: "Payment agent",
   seed: "Demo seed",
@@ -81,7 +81,8 @@ const ACTOR_LABEL: Record<string, string> = {
 
 function summarize(meta: Record<string, unknown>): string {
   return Object.entries(meta)
-    .filter(([, v]) => v !== null && v !== undefined && typeof v !== "object")
+    // The model id stays in the audit table but isn't shown; the UI just says "AI".
+    .filter(([k, v]) => k !== "model" && v !== null && v !== undefined && typeof v !== "object")
     .map(([k, v]) => `${k.replaceAll("_", " ")}: ${v}`)
     .join(" · ")
     .slice(0, 240);
@@ -119,7 +120,7 @@ export async function activityRows(): Promise<ActivityGridRow[]> {
     actorType: r.actor_type,
     actor: r.actor_name ?? ACTOR_LABEL[r.actor_id] ?? r.actor_id,
     action: r.action,
-    subject: r.subject ?? (r.resource_type === "model" ? `model ${r.resource_id}` : r.resource_type),
+    subject: r.subject ?? (r.resource_type === "model" ? "AI model call" : r.resource_type),
     afterState: r.after_state,
     details: [r.metadata.reasons?.join(" "), summarize(r.metadata)].filter(Boolean).join(" · "),
   }));

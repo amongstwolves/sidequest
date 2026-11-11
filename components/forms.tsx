@@ -57,7 +57,7 @@ export function ObjectiveForm() {
       >
         {pending ? "Planning missions…" : "Plan missions"}
       </button>
-      {pending && <p className="text-sm text-muted" aria-live="polite">Claude is drafting the plan; the policy check runs next. This takes up to a minute.</p>}
+      {pending && <p className="text-sm text-muted" aria-live="polite">AI is drafting the plan; the policy check runs next. This takes up to a minute.</p>}
     </form>
   );
 }
@@ -192,7 +192,7 @@ export function EvidenceUpload({ missionId, resubmit }: { missionId: string; res
       </label>
       <details className="text-xs text-muted">
         <summary className="cursor-pointer hover:text-foreground">No café nearby? Use demo photos</summary>
-        <p className="mt-2">Download, then pick them above. Submit without the price card first to see Claude ask for a reshoot.</p>
+        <p className="mt-2">Download, then pick them above. Submit without the price card first to see the AI ask for a reshoot.</p>
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
           {DEMO_PHOTOS.map((p) => (
             <li key={p.file}>
@@ -211,7 +211,7 @@ export function EvidenceUpload({ missionId, resubmit }: { missionId: string; res
       )}
       {(prepError || state.error) && <p role="alert" className="rounded-lg bg-error/15 px-3 py-2 text-sm text-error">{prepError ?? state.error}</p>}
       <button type="submit" disabled={pending || photos.length === 0} className="w-full rounded-lg bg-accent px-4 py-2.5 font-semibold text-background disabled:opacity-60 sm:w-auto">
-        {pending ? "Claude is checking your photos…" : "Submit proof"}
+        {pending ? "AI is evaluating your photos…" : "Submit proof"}
       </button>
     </form>
   );

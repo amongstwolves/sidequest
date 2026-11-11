@@ -140,7 +140,7 @@ export function buildMcpServer(agentId: string, appUrl: string): McpServer {
     {
       title: "Create mission objective",
       description:
-        "Describe a physical-world outcome in plain English with a budget. SIDEQUEST plans local missions with Claude, then checks them against your spending policy. Over-limit or prohibited requests are refused with reasons. Approved plans wait for your principal to approve the PayPal hold.",
+        "Describe a physical-world outcome in plain English with a budget. SIDEQUEST plans local missions with AI, then checks them against your spending policy. Over-limit or prohibited requests are refused with reasons. Approved plans wait for your principal to approve the PayPal hold.",
       inputSchema: {
         request: z.string().min(15).max(2000).describe("What needs to happen, where, and what proof is needed."),
         budget_usd: z.number().positive().max(10000).describe("Maximum total budget in US dollars."),

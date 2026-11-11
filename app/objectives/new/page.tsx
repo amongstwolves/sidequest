@@ -10,7 +10,7 @@ export default function NewObjectivePage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">New objective</h1>
         <p className="text-muted">
-          Describe the outcome. Claude splits it into local missions, then the policy check decides whether it can be published.
+          Describe the outcome. AI splits it into local missions, then the policy check decides whether it can be published.
         </p>
       </div>
       <Suspense fallback={<Card className="h-64" />}>
