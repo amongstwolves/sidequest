@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { audit, type ActorType } from "@/lib/audit";
 import { generatePlan, validatePlan, type LocationForPlan, type ValidatedMission } from "@/lib/ai/planner";
-import { evaluatePlan, screenText, type PolicyResult } from "@/lib/policy";
+import { evaluatePlan, screenText, type AgentPolicy, type PolicyResult } from "@/lib/policy";
 
 export type StoredPlan = {
   summary: string;
@@ -20,8 +20,25 @@ export type CreateObjectiveInput = {
   budgetMinor: number;
   deadline: Date;
   actor: { type: ActorType; id: string };
-  agentId?: string;
+  /** Set when an external AI agent submits on behalf of its principal (spec §9). */
+  agent?: { id: string; policy: AgentPolicy; spentTodayMinor: number; region: string };
 };
+
+/** Agent limits that can be checked before spending a model call on planning. */
+function agentPrecheck(input: CreateObjectiveInput): PolicyResult {
+  const a = input.agent;
+  if (!a) return { decision: "ALLOW", reasons: [] };
+  const reasons: string[] = [];
+  const remaining = a.policy.daily_limit_minor - a.spentTodayMinor;
+  if (a.policy.expires_at && a.policy.expires_at.getTime() < Date.now()) reasons.push("The agent's credentials have expired.");
+  if (a.region !== a.policy.allowed_region) reasons.push(`Region "${a.region}" is outside the agent's allowed region (${a.policy.allowed_region}).`);
+  if (input.budgetMinor > remaining) {
+    reasons.push(
+      `Budget $${input.budgetMinor / 100} exceeds the agent's remaining daily limit ($${remaining / 100} of $${a.policy.daily_limit_minor / 100}).`,
+    );
+  }
+  return reasons.length ? { decision: "REJECT", reasons } : { decision: "ALLOW", reasons: [] };
+}
 
 export async function listLocations(): Promise<LocationForPlan[]> {
   return db()<LocationForPlan[]>`
@@ -38,7 +55,7 @@ export async function createObjective(input: CreateObjectiveInput): Promise<{ id
     select organization_id from organization_members where user_id = ${input.requesterId} limit 1`;
   const [objective] = await sql<{ id: string }[]>`
     insert into objectives (requester_id, agent_id, organization_id, request_text, deadline, budget_minor, state, geo_scope)
-    values (${input.requesterId}, ${input.agentId ?? null}, ${org?.organization_id ?? null}, ${input.requestText},
+    values (${input.requesterId}, ${input.agent?.id ?? null}, ${org?.organization_id ?? null}, ${input.requestText},
             ${input.deadline}, ${input.budgetMinor}, 'VALIDATING', 'charlotte_demo')
     returning id`;
   await audit(sql, {
@@ -48,11 +65,16 @@ export async function createObjective(input: CreateObjectiveInput): Promise<{ id
     resourceType: "objective",
     resourceId: objective.id,
     afterState: "VALIDATING",
-    metadata: { budget_minor: input.budgetMinor },
+    metadata: { budget_minor: input.budgetMinor, via: input.agent ? "agent" : "web" },
   });
 
-  // Screen the request before spending a model call on it.
-  const screen = screenText(input.requestText);
+  // Screen the request (and an agent's spending limits) before spending a model call on it.
+  const textScreen = screenText(input.requestText);
+  const pre = agentPrecheck(input);
+  const screen: PolicyResult =
+    textScreen.decision === "REJECT" || pre.decision === "REJECT"
+      ? { decision: "REJECT", reasons: [...textScreen.reasons, ...pre.reasons] }
+      : textScreen;
   let stored: StoredPlan;
   let model: string;
   let policy: PolicyResult;
@@ -76,7 +98,7 @@ export async function createObjective(input: CreateObjectiveInput): Promise<{ id
       fallbackReason: generated.fallbackReason,
     };
     model = generated.model;
-    policy = evaluatePlan({ requestText: input.requestText, budgetMinor: input.budgetMinor, missions });
+    policy = evaluatePlan({ requestText: input.requestText, budgetMinor: input.budgetMinor, missions }, input.agent);
     if (errors.length) policy = { decision: "REJECT", reasons: [...errors, ...policy.reasons.filter((r) => !errors.includes(r))] };
   }
 

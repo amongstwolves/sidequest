@@ -59,7 +59,9 @@ async function Objective({ params, searchParams }: Pick<PageProps<"/objectives/[
         </div>
         <p className="max-w-3xl text-lg">&ldquo;{objective.request_text}&rdquo;</p>
         <p className="text-sm text-muted">
-          {objective.requester_name} · budget <Money minor={objective.budget_minor} /> · due {formatDeadline(objective.deadline)}
+          {objective.requester_name}
+          {objective.agent_id && <span className="ml-1 rounded border border-accent/40 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">via AI agent</span>}
+          {" "}· budget <Money minor={objective.budget_minor} /> · due {formatDeadline(objective.deadline)}
         </p>
       </div>
 
