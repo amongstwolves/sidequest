@@ -92,10 +92,10 @@ To see a **policy refusal**, create an objective such as "Follow the barista at 
 
 | | |
 |---|---|
-| Email | `sb-pzjlj53706300@personal.example.com` |
-| Password | `<SANDBOX_BUYER_PASSWORD>` |
+| Email | `sb-peuoq53859101@personal.example.com` |
+| Password | `H(8nr#$q` |
 
-This is a PayPal **sandbox** test account; it only works on sandbox.paypal.com and holds no real funds. Operators are paid to two other sandbox accounts.
+This is a PayPal **sandbox** test account created for judging; it only works on sandbox.paypal.com and holds no real funds. At checkout, pay with the **card**. Operators are paid to two other sandbox accounts. If the login stops working, the password may have been changed by another visitor: please note it and continue with the rest of the walkthrough.
 
 ### AI agent over MCP (optional)
 
