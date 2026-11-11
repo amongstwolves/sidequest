@@ -25,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="text-lg font-bold tracking-[0.2em]">
               SIDE<span className="text-accent">QUEST</span>
             </Link>
+            <Link href="/control" className="text-sm text-muted hover:text-foreground">Mission Control</Link>
             <Link href="/discover" className="text-sm text-muted hover:text-foreground">Missions</Link>
             <Link href="/objectives/new" className="text-sm text-muted hover:text-foreground">New objective</Link>
           </nav>

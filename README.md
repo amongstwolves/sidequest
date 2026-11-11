@@ -16,7 +16,7 @@ What works today:
 - [x] Approve & pay: partial capture → PayPal Payouts to the operator → unused budget voided.
 - [x] AI agent access over MCP, held to the agent's spending policy.
 - [x] Demo role switcher (Requester / Operator A / Operator B) and one-click demo reset.
-- [ ] AG Grid Mission Control (in progress).
+- [x] Mission Control built on AG Grid: mission rows with PayPal authorization, capture and payout IDs; an activity log filterable by actor (human, AI agent, system, PayPal); budget summary; live refresh.
 
 ## How PayPal is used
 
