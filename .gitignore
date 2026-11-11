@@ -27,3 +27,6 @@ npm-debug.log*
 
 # Copied from node_modules on install (scripts/copy-map-worker.mjs)
 /public/maplibre-gl-worker.mjs
+
+# Storyboard / video screenshots (scripts/storyboard.mjs)
+/storyboard/
