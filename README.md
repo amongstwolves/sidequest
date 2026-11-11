@@ -120,7 +120,39 @@ Then ask your agent to create a $250 objective (refused: over the $100 daily lim
 
 ## Roadmap
 
-- **Operator reputation and rewards:** profiles with reliability, first-try proof pass rate and badges (for example "10 verified displays"), with opt-in regional rankings that reward quality and on-time work rather than raw volume.
+### Operator reputation and rewards
+
+Today, an operator's reliability is a single number used quietly in matching. The next step is to make good work visible and worth something, without turning it into a race.
+
+**What an operator would see on their home**
+
+> Riley Okonkwo · Northgate Mill
+> Reliability 94% · 18 missions · 89% passed proof first time · 0 late
+> Badges: *10 verified displays* · *Same-day finisher* · *Event-ready*
+
+**How it's earned.** Every signal comes from data SIDEQUEST already records:
+
+| Signal | Source today |
+|---|---|
+| First-try proof pass rate | AI evaluation results per submission |
+| On-time completion | Mission deadline vs. proof submission time |
+| Requester approvals | Approve & pay decisions |
+| Completed missions by category | Assignments and mission categories |
+
+**Example badges**
+
+- *10 verified displays*: ten RECON missions approved.
+- *Sharp shooter*: ten proofs in a row that passed the AI check on the first try.
+- *Same-day finisher*: five missions completed within a day of accepting.
+- *Event-ready*: completed an EVENT mission with no reshoot.
+
+**What rewards unlock.** Perks are about access, never about paying someone less:
+
+- **Early offers:** high-reliability operators see new missions a few minutes before they open to everyone nearby.
+- **Higher-value missions:** requesters can require a minimum reliability or a badge for sensitive or multi-location work.
+- **Faster payouts:** trusted operators can be paid as soon as the AI recommends a pass, while the requester keeps a short window to dispute.
+
+**Rankings, carefully.** An optional, regional "top operators this month" board ranks on quality (first-try passes, on-time work and approvals), not volume or speed, so nobody is pushed to rush or take unsafe jobs. It's opt-in, shows first names only, and is never used to cut anyone's pay. Points are not money and can't be converted into money; earnings stay real PayPal payouts.
 
 ## License
 
