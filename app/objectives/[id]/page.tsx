@@ -52,7 +52,7 @@ async function Objective({ params, searchParams }: Pick<PageProps<"/objectives/[
     <div className="space-y-6">
       {notice && <p role="status" className={`rounded-lg px-4 py-3 text-sm ${notice.style}`}>{notice.text}</p>}
       <div className="space-y-2">
-        <Link href="/" className="text-sm text-muted hover:text-foreground">← Objectives</Link>
+        <Link href="/control" className="text-sm text-muted hover:text-foreground">← Mission Control</Link>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold">Objective</h1>
           <StateBadge state={objective.state} />

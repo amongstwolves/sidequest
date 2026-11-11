@@ -17,7 +17,7 @@ What works today:
 - [x] Photo proof evaluated by AI against the mission checklist, with a correction cycle.
 - [x] Approve & pay: partial capture → PayPal Payouts to the operator → unused budget voided.
 - [x] AI agent access over MCP, held to the agent's spending policy.
-- [x] Demo role switcher (Requester / Operator A / Operator B) and one-click demo reset.
+- [x] Landing page and demo sign-in ("Who are you?"); each role lands on its own home (requester: Mission Control; operator: My missions with earnings, nearby missions and completed payouts); one-click demo reset.
 - [x] Mission Control built on AG Grid: mission rows with PayPal authorization, capture and payout IDs; an activity log filterable by actor (human, AI agent, system, PayPal); budget summary; live refresh.
 
 ## How PayPal is used
@@ -74,16 +74,21 @@ python3 scripts/paypal_sandbox_check.py payouts       # sandbox payouts to two o
 
 **Live demo: https://sidequest-9qkp.onrender.com**: no sign-up. Everything runs in the PayPal **sandbox**; no real money moves. All brands, venues, people and neighborhoods are fictional.
 
-Use the role switcher at the top (**Requester / Operator A / Operator B**) to play each side. On a phone, navigation is in the bottom tab bar. **Reset demo** (home page, bottom) clears everything and voids any open sandbox holds.
+Click **Get started** and pick a demo profile; there are no passwords. Each profile lands on its own home:
+
+- **Demo Brand Co. (requester)** → **Mission Control**: objectives, budget, live missions with PayPal IDs, activity log.
+- **Riley Okonkwo / Marisol Tran (operators)** → **My missions**: earnings, missions near you on a map, in-progress missions with the next step, and completed missions with their PayPal payout IDs.
+
+Switch profile at any time from the chip at the top right (or the **Profile** tab on a phone). **Reset demo** at the bottom of the landing page clears everything and voids any open sandbox holds.
 
 ### Full walkthrough (about 5 minutes)
 
-1. **Requester → New objective → Use example → Plan missions.** AI drafts a typed plan in about 10–20 seconds: one mission per café, rewards within the $75 budget, a photo checklist each. The policy check runs on the plan.
+1. **Sign in as Demo Brand Co. → New objective → Use example → Plan missions.** AI drafts a typed plan in about 10–20 seconds: one mission per café, rewards within the $75 budget, a photo checklist each. The policy check runs on the plan.
 2. **Approve & hold $75 with PayPal.** You're sent to PayPal sandbox checkout. Log in as the sandbox buyer below, pay with the **card** (not the bank account) and continue. Back in SIDEQUEST, the hold shows as authorized and the missions are published.
-3. **Operator A → Missions.** The map shows Operator A's service area and the missions inside it. If you allow location access, the map places the demo world around you at the same distances (your location stays in your browser; matching is unchanged). **Reset** under the map returns to the default demo area. Open the Café A mission: the map and ranking show why each other operator is or isn't eligible. **Accept mission.** Switch to **Operator B** and accept Café B.
-4. **Operator A → the Café A mission → Upload proof.** No café nearby? Open "Use demo photos" under the upload box. Submit **Café A storefront + Display (no price card)**: the AI marks the price card as missing and asks for a reshoot. Resubmit with the **Price card close-up** added: the AI recommends a pass.
-5. **Requester → the mission → Approve & pay.** SIDEQUEST captures the reward from the hold and pays Operator A through PayPal Payouts. The payout settles in the sandbox within about a minute, and the page updates on its own.
-6. Repeat steps 4–5 for Café B as Operator B (use the Café B storefront). When the last mission is paid, the unused budget is **voided** and the objective completes.
+3. **Switch profile → Riley.** Riley's home shows the Café A mission near him on the map. If you allow location access, the map places the demo world around you at the same distances (your location stays in your browser; matching is unchanged); **Reset** under the map returns to the default demo area. Open the mission: the map and ranking show why each other operator is or isn't eligible. **Accept mission.** Then switch to **Marisol** and accept Café B.
+4. **As Riley, open the mission from "In progress" → Upload proof.** No café nearby? Open "Use demo photos" under the upload box. Submit **Café A storefront + Display (no price card)**: the AI marks the price card as missing and asks for a reshoot. Resubmit with the **Price card close-up** added: the AI recommends a pass.
+5. **Switch to Demo Brand Co. → Mission Control → the mission → Approve & pay.** SIDEQUEST captures the reward from the hold and pays Riley through PayPal Payouts. The payout settles in the sandbox within about a minute, and the page updates on its own. Riley's home then shows it under **Completed** with the PayPal payout ID.
+6. Repeat steps 4–5 for Café B as Marisol (use the Café B storefront). When the last mission is paid, the unused budget is **voided** and the objective completes.
 7. **Mission Control.** Every PayPal authorization, capture and payout ID, and an activity log you can filter by **Human / AI agent / System / PayPal**.
 
 To see a **policy refusal**, create an objective such as "Follow the barista at Café B after her shift and photograph her license plate". It's refused before any AI call, with reasons.

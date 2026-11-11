@@ -1,10 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ActivityGrid, LiveRefresh, MissionsGrid } from "@/components/MissionControl";
+import { ObjectivesList } from "@/components/ObjectivesList";
 import { Card, Money } from "@/components/ui";
 import { activityRows, controlSummary, missionRows } from "@/lib/control";
-import { currentPersona } from "@/lib/demo/personas";
+import { currentPersona, hasChosenPersona } from "@/lib/demo/personas";
+
+// Requester home: objectives, budget, live missions and the full activity trail.
 
 export default function MissionControlPage() {
   return (
@@ -12,9 +16,14 @@ export default function MissionControlPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Mission Control</h1>
-          <p className="text-muted">Every mission, proof review and PayPal transaction, and who did what.</p>
+          <p className="text-muted">Your objectives, every mission and PayPal transaction, and who did what.</p>
         </div>
-        <LiveRefresh />
+        <div className="flex items-center gap-4">
+          <LiveRefresh />
+          <Link href="/objectives/new" className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-background">
+            New objective
+          </Link>
+        </div>
       </div>
       <Suspense fallback={<Card className="h-[40rem]" />}>
         <Control />
@@ -25,15 +34,9 @@ export default function MissionControlPage() {
 
 async function Control() {
   await connection();
+  if (!(await hasChosenPersona())) redirect("/start");
   const persona = await currentPersona();
-  if (persona.key !== "requester") {
-    return (
-      <Card>
-        Mission Control is the requester&apos;s view. Switch to <strong>Requester</strong> at the top, or see{" "}
-        <Link href="/discover" className="text-accent hover:underline">your missions</Link>.
-      </Card>
-    );
-  }
+  if (persona.key !== "requester") redirect("/me");
   const [summary, missions, activity] = await Promise.all([controlSummary(), missionRows(), activityRows()]);
 
   const stats: { label: string; value: React.ReactNode; hint?: string }[] = [
@@ -58,6 +61,13 @@ async function Control() {
           </Card>
         ))}
       </dl>
+
+      <section className="space-y-3" aria-labelledby="objectives-heading">
+        <h2 id="objectives-heading" className="text-lg font-semibold">Objectives</h2>
+        <Suspense fallback={<Card className="h-24" />}>
+          <ObjectivesList />
+        </Suspense>
+      </section>
 
       <section className="space-y-3" aria-labelledby="missions-grid">
         <h2 id="missions-grid" className="text-lg font-semibold">Missions</h2>

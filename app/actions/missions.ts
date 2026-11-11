@@ -12,7 +12,7 @@ export type AcceptState = { error?: string; ok?: boolean };
 
 export async function acceptMissionAction(_prev: AcceptState, formData: FormData): Promise<AcceptState> {
   const persona = await currentPersona();
-  if (persona.key === "requester") return { error: "Switch to an operator role to accept missions." };
+  if (persona.key === "requester") return { error: "Sign in as an operator to accept missions." };
   try {
     await acceptMission(String(formData.get("mission_id") ?? ""), persona.userId);
   } catch (err) {
@@ -62,7 +62,7 @@ export type ProofState = { error?: string; result?: string; message?: string };
 
 export async function submitEvidenceAction(_prev: ProofState, formData: FormData): Promise<ProofState> {
   const persona = await currentPersona();
-  if (persona.key === "requester") return { error: "Switch to the operator who accepted this mission." };
+  if (persona.key === "requester") return { error: "Sign in as the operator who accepted this mission." };
   const files = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
   try {
     const review = await submitEvidence(String(formData.get("mission_id") ?? ""), persona.userId, files);

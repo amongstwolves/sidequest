@@ -36,8 +36,8 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="space-y-5">
         <div className="space-y-2">
-          <Link href={isOperator ? "/discover" : `/objectives/${m.objective_id}`} className="text-sm text-muted hover:text-foreground">
-            ← {isOperator ? "Missions" : "Objective"}
+          <Link href={isOperator ? "/me" : `/objectives/${m.objective_id}`} className="text-sm text-muted hover:text-foreground">
+            ← {isOperator ? "My missions" : "Objective"}
           </Link>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold tracking-wider text-muted">{m.category}</span>

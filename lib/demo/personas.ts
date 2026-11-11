@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 
-// Demo personas behind the role switcher. User IDs match db/seed.sql.
+// Demo profiles chosen on /start (pseudo-login). User IDs match db/seed.sql.
 // Judges can act as the requester and both operators without creating accounts.
 export const PERSONAS = [
   {
@@ -38,6 +38,16 @@ export function isPersonaKey(value: unknown): value is PersonaKey {
 
 export function personaByKey(key: PersonaKey): Persona {
   return PERSONAS.find((p) => p.key === key)!;
+}
+
+/** True once the visitor has picked a profile on /start (the demo's pseudo-login). */
+export async function hasChosenPersona(): Promise<boolean> {
+  return isPersonaKey((await cookies()).get(PERSONA_COOKIE)?.value);
+}
+
+/** Where each role lands after "signing in". */
+export function homeFor(persona: Persona): string {
+  return persona.key === "requester" ? "/control" : "/me";
 }
 
 /** Current demo persona from the request cookie (defaults to the requester). */

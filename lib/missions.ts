@@ -136,3 +136,28 @@ export async function acceptMission(missionId: string, operatorUserId: string): 
     throw err;
   }
 }
+
+export type EarningRow = {
+  mission_id: string;
+  title: string;
+  location_name: string | null;
+  amount_minor: number;
+  status: string;
+  payout_item_id: string | null;
+  paid_at: Date;
+};
+
+/** An operator's paid and in-flight payments, newest first (PAID only after PayPal confirms). */
+export async function operatorEarnings(operatorId: string): Promise<EarningRow[]> {
+  return db()<EarningRow[]>`
+    select m.id as mission_id, m.title, l.name as location_name, ob.amount_minor, ob.status,
+           (select t.provider_payout_item_id from payment_transactions t
+             where t.obligation_id = ob.id and t.operation = 'PAYOUT' limit 1) as payout_item_id,
+           ob.updated_at as paid_at
+    from payment_obligations ob
+    join assignments a on a.id = ob.assignment_id
+    join missions m on m.id = a.mission_id
+    left join locations l on l.id = m.location_id
+    where ob.payee_id = ${operatorId}
+    order by ob.updated_at desc`;
+}

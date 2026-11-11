@@ -25,8 +25,11 @@ async function RequesterOnly() {
   if (persona.key !== "requester") {
     return (
       <Card>
-        <p>You&apos;re acting as {persona.name}, an operator. Switch to <strong>Requester</strong> at the top to create objectives.</p>
-        <Link href="/discover" className="mt-3 inline-block text-accent hover:underline">See missions near you →</Link>
+        <p>You&apos;re signed in as {persona.name}, an operator. Objectives are created by requesters.</p>
+        <div className="mt-3 flex flex-wrap gap-4">
+          <Link href="/me" className="text-accent hover:underline">My missions →</Link>
+          <Link href="/start" className="text-muted hover:text-foreground">Switch profile</Link>
+        </div>
       </Card>
     );
   }

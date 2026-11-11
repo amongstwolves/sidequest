@@ -63,8 +63,8 @@ async function Feed() {
         <h1 className="text-2xl font-bold">{isOperator ? "Missions near you" : "All missions"}</h1>
         <p className="text-muted">
           {isOperator
-            ? `Acting as ${persona.name}. You only see missions you're eligible for: in range, with the right skills, before the deadline.`
-            : "Every published mission and who accepted it. Switch to an operator role to see their view."}
+            ? `Signed in as ${persona.name}. You only see missions you're eligible for: in range, with the right skills, before the deadline.`
+            : "Every published mission and who accepted it. Sign in as an operator to see their view."}
         </p>
       </div>
 

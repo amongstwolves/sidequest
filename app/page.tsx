@@ -1,117 +1,107 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { currentPersona } from "@/lib/demo/personas";
 import Link from "next/link";
 import { resetDemoAction } from "@/app/actions/demo";
-import { Card, formatDeadline, Money, StateBadge } from "@/components/ui";
+import { Card } from "@/components/ui";
+import { currentPersona, hasChosenPersona, homeFor } from "@/lib/demo/personas";
 import { getHealth, type HealthStatus } from "@/lib/health";
-import { isDatabaseConfigured } from "@/lib/db";
-import { listObjectives } from "@/lib/objectives";
 
-const FLOW = [
-  { step: "Objective", detail: "A person or AI agent describes the outcome and budget." },
-  { step: "Plan", detail: "AI splits it into local missions with rewards and proof rubrics." },
-  { step: "Hold funds", detail: "Requester approves; PayPal authorizes the budget." },
-  { step: "Accept", detail: "Nearby operators choose missions. No forced assignment." },
-  { step: "Proof", detail: "AI checks photos against the rubric and asks for fixes." },
-  { step: "Pay", detail: "Each approved mission is captured and paid out via PayPal." },
+// Public landing page: what SIDEQUEST is, how it flows, and the way in (/start).
+
+const OPERATOR_STEPS = [
+  { step: "See missions near you", detail: "Short, paid tasks on a map, with the reward and distance up front." },
+  { step: "Accept and go", detail: "Accepting is voluntary and exclusive: the first eligible operator gets it." },
+  { step: "Snap the proof", detail: "AI checks your photos against the checklist and tells you what to reshoot." },
+  { step: "Get paid", detail: "Once approved, your reward is paid out through PayPal." },
 ];
 
-export default function Home() {
+const REQUESTER_STEPS = [
+  { step: "Describe the outcome", detail: "In plain English, or let your AI agent ask over MCP within its budget." },
+  { step: "Approve the plan", detail: "AI splits it into local missions; PayPal holds the budget." },
+  { step: "Review the proof", detail: "Photos arrive with an AI evaluation; you make the final call." },
+  { step: "Pay and close", detail: "Each approved mission is paid; unused budget is released." },
+];
+
+export default function Landing() {
   return (
-    <div className="space-y-10">
-      <section className="space-y-3">
+    <div className="space-y-12">
+      <section className="space-y-5 pt-2">
         <p className="text-sm font-semibold uppercase tracking-widest text-accent">The real world has quests</p>
-        <h1 className="max-w-2xl text-3xl font-bold leading-tight sm:text-4xl">
-          AI can plan the work. SIDEQUEST gets it done in the physical world, and pays for it through PayPal.
+        <h1 className="max-w-2xl text-3xl font-bold leading-tight sm:text-5xl">
+          AI can plan the work. People nearby get it done. PayPal pays them.
         </h1>
-        <Suspense fallback={<p className="text-muted">Loading your role…</p>}>
-          <PersonaGreeting />
+        <p className="max-w-2xl text-lg text-muted">
+          SIDEQUEST turns a business&apos;s goal into short local missions, verifies the photo proof with AI, and pays the
+          people who did the work, with every dollar held and released through PayPal.
+        </p>
+        <Suspense fallback={<div className="h-12 w-48 rounded-lg bg-surface" />}>
+          <GetStarted />
         </Suspense>
       </section>
 
-      <section aria-labelledby="objectives-heading" className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="objectives-heading" className="text-lg font-semibold">Objectives</h2>
-          <div className="flex gap-2">
-            <Link href="/discover" className="rounded-lg bg-surface px-4 py-2 text-sm font-semibold hover:bg-surface-2">Missions</Link>
-            <Link href="/objectives/new" className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-background">New objective</Link>
-          </div>
+      <section aria-labelledby="how-heading" className="space-y-5">
+        <h2 id="how-heading" className="text-xl font-semibold">How it works</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <FlowCard title="If you do missions" steps={OPERATOR_STEPS} />
+          <FlowCard title="If you need things done" steps={REQUESTER_STEPS} />
         </div>
-        <Suspense fallback={<Card className="h-24" />}>
-          <Objectives />
-        </Suspense>
       </section>
 
-      <section aria-labelledby="flow-heading" className="space-y-4">
-        <h2 id="flow-heading" className="text-lg font-semibold">How a mission flows</h2>
-        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {FLOW.map((item, i) => (
-            <li key={item.step} className="rounded-xl bg-surface p-4">
-              <span className="font-mono text-xs text-muted">0{i + 1}</span>
-              <p className="mt-1 font-semibold">{item.step}</p>
-              <p className="mt-1 text-sm text-muted">{item.detail}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section aria-labelledby="status-heading" className="space-y-4">
-        <h2 id="status-heading" className="text-lg font-semibold">System status</h2>
-        <Suspense fallback={<p className="text-muted">Checking services…</p>}>
+      <section aria-labelledby="judges-heading" className="space-y-4 border-t border-surface-2 pt-8">
+        <h2 id="judges-heading" className="text-sm font-semibold uppercase tracking-widest text-muted">For judges and testers</h2>
+        <p className="text-sm text-muted">
+          Everything runs in the PayPal sandbox with fictional brands, venues and people. Pick any profile on the sign-in page;
+          there are no passwords.
+        </p>
+        <Suspense fallback={<p className="text-sm text-muted">Checking services…</p>}>
           <SystemStatus />
         </Suspense>
         <form action={resetDemoAction} className="flex flex-wrap items-center gap-3 text-sm">
           <button type="submit" className="rounded-lg border border-surface-2 px-3 py-1.5 text-muted hover:border-warning hover:text-warning">
             Reset demo
           </button>
-          <span className="text-muted">Clears all objectives and missions and reloads the fictional seed data.</span>
+          <span className="text-muted">Clears all objectives and missions, voids open sandbox holds, and reloads the seed data.</span>
         </form>
       </section>
     </div>
   );
 }
 
-async function Objectives() {
-  await connection();
-  if (!isDatabaseConfigured()) return <Card className="text-muted">Database not configured.</Card>;
-  const rows = await listObjectives();
-  if (rows.length === 0) {
-    return (
-      <Card className="text-muted">
-        No objectives yet. As the requester, <Link href="/objectives/new" className="text-accent hover:underline">describe one</Link> and AI will plan the missions.
-      </Card>
-    );
-  }
+function FlowCard({ title, steps }: { title: string; steps: { step: string; detail: string }[] }) {
   return (
-    <ul className="divide-y divide-surface-2 rounded-xl bg-surface">
-      {rows.map((o) => (
-        <li key={o.id}>
-          <Link href={`/objectives/${o.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-surface-2/50">
-            <span className="min-w-0 flex-1">
-              <span className="line-clamp-1">{o.request_text}</span>
-              <span className="block text-sm text-muted">
-                {o.agent_id ? "AI agent · " : ""}{o.mission_count} missions · due {formatDeadline(o.deadline)}
-              </span>
+    <Card className="space-y-4">
+      <h3 className="font-semibold">{title}</h3>
+      <ol className="space-y-3">
+        {steps.map((s, i) => (
+          <li key={s.step} className="flex gap-3">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-surface-2 font-mono text-xs text-accent">{i + 1}</span>
+            <span>
+              <span className="block font-medium">{s.step}</span>
+              <span className="block text-sm text-muted">{s.detail}</span>
             </span>
-            <span className="flex items-center gap-3"><Money minor={o.budget_minor} /><StateBadge state={o.state} /></span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ol>
+    </Card>
   );
 }
 
-async function PersonaGreeting() {
-  const persona = await currentPersona();
-  const hint =
-    persona.key === "requester"
-      ? "You're the brand. Next up: describe an objective and approve a plan."
-      : "You're a local operator. Next up: browse nearby missions and accept one.";
+async function GetStarted() {
+  if (await hasChosenPersona()) {
+    const p = await currentPersona();
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <Link href={homeFor(p)} className="rounded-lg bg-accent px-5 py-3 font-semibold text-background">
+          Continue as {p.name}
+        </Link>
+        <Link href="/start" className="text-sm text-muted hover:text-foreground">Switch profile</Link>
+      </div>
+    );
+  }
   return (
-    <p className="text-muted">
-      Acting as <span className="font-semibold text-foreground">{persona.name}</span> ({persona.role}). {hint}
-    </p>
+    <Link href="/start" className="inline-block rounded-lg bg-accent px-5 py-3 font-semibold text-background">
+      Get started
+    </Link>
   );
 }
 

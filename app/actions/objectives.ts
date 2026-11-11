@@ -12,7 +12,7 @@ export type FormState = { error?: string };
 
 export async function createObjectiveAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const persona = await currentPersona();
-  if (persona.key !== "requester") return { error: "Switch to the Requester role to create objectives." };
+  if (persona.key !== "requester") return { error: "Sign in as the requester to create objectives." };
 
   const requestText = String(formData.get("request") ?? "").trim();
   const budgetRaw = String(formData.get("budget") ?? "").replace(/[$,\s]/g, "");
