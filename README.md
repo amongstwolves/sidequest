@@ -118,6 +118,10 @@ Then ask your agent to create a $250 objective (refused: over the $100 daily lim
 - **AI calls are capped** at 200 a day for the whole demo. If the cap is hit, planning falls back to a labelled template plan and proof waits for human review, so the flow still works.
 - If a PayPal step fails, the mission page shows **Retry payment** or **Check payout status**. Every PayPal call is idempotent, so a retry never charges or pays twice.
 
+## Roadmap
+
+- **Operator reputation and rewards:** profiles with reliability, first-try proof pass rate and badges (for example "10 verified displays"), with opt-in regional rankings that reward quality and on-time work rather than raw volume.
+
 ## License
 
 [MIT](LICENSE)
