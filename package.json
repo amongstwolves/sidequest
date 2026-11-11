@@ -8,13 +8,15 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "node scripts/db-migrate.mjs",
-    "db:validate": "node scripts/db-validate.mjs"
+    "db:validate": "node scripts/db-validate.mjs",
+    "postinstall": "node scripts/copy-map-worker.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "ag-grid-community": "^36.3.0",
     "ag-grid-react": "^36.3.0",
+    "maplibre-gl": "^6.17.0",
     "next": "16.4.5",
     "postgres": "^4.1.0",
     "react": "19.3.0",

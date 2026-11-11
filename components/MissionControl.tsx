@@ -102,7 +102,9 @@ export function MissionsGrid({ rows }: { rows: MissionGridRow[] }) {
     [],
   );
   return (
-    <div>
+    <>
+      <MissionCards rows={rows} />
+      <div className="hidden md:block">
       <AgGridReact<MissionGridRow>
         theme={theme}
         rowData={rows}
@@ -116,6 +118,82 @@ export function MissionsGrid({ rows }: { rows: MissionGridRow[] }) {
         overlayNoRowsTemplate="No missions yet. Approve a plan to publish missions."
         animateRows
       />
+      </div>
+    </>
+  );
+}
+
+const pretty = (v: string | null) => (v ? v.replaceAll("_", " ").toLowerCase() : "—");
+const usdText = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+const timeText = (iso: string) =>
+  new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }).format(new Date(iso));
+
+/** Phone layout for the missions grid: one card per mission with its PayPal trail. */
+function MissionCards({ rows }: { rows: MissionGridRow[] }) {
+  if (rows.length === 0) return <p className="rounded-xl bg-surface p-4 text-sm text-muted md:hidden">No missions yet. Approve a plan to publish missions.</p>;
+  return (
+    <ul className="space-y-3 md:hidden">
+      {[...rows].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).map((r) => (
+        <li key={r.id}>
+          <Link href={`/missions/${r.id}`} className="block space-y-3 rounded-xl bg-surface p-4 active:bg-surface-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold leading-snug">{r.title}</p>
+                <p className="text-sm text-muted">{r.location ?? "—"} · {r.operator ?? "unassigned"}</p>
+              </div>
+              <span className="shrink-0 font-mono text-accent">{usdText(r.rewardMinor)}</span>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className={`rounded-full bg-surface-2 px-2.5 py-0.5 font-semibold ${STATE_CLASS[r.state] ?? ""}`}>{pretty(r.state)}</span>
+              {r.review && <span className={`rounded-full bg-surface-2 px-2.5 py-0.5 ${STATE_CLASS[r.review] ?? ""}`}>proof: {pretty(r.review)}</span>}
+              {r.paymentStatus && <span className={`rounded-full bg-surface-2 px-2.5 py-0.5 ${STATE_CLASS[r.paymentStatus] ?? ""}`}>payment: {pretty(r.paymentStatus)}</span>}
+              {r.viaAgent && <span className="rounded-full border border-accent/40 px-2.5 py-0.5 text-accent">AI agent</span>}
+            </div>
+            {(r.authorizationId || r.captureId || r.payoutItemId) && (
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                {r.authorizationId && (<><dt className="text-muted">Hold</dt><dd className="truncate font-mono">{r.authorizationId}</dd></>)}
+                {r.captureId && (<><dt className="text-muted">Capture</dt><dd className="truncate font-mono">{r.captureId}</dd></>)}
+                {r.payoutItemId && (<><dt className="text-muted">Payout</dt><dd className="truncate font-mono">{r.payoutItemId}</dd></>)}
+              </dl>
+            )}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Phone layout for the activity log: a compact timeline. */
+function ActivityTimeline({ rows }: { rows: ActivityGridRow[] }) {
+  const [limit, setLimit] = useState(25);
+  if (rows.length === 0) return <p className="rounded-xl bg-surface p-4 text-sm text-muted md:hidden">No events.</p>;
+  return (
+    <div className="md:hidden">
+      <ol className="relative space-y-3 border-l border-surface-2 pl-4">
+        {rows.slice(0, limit).map((r) => (
+          <li key={r.id} className="relative">
+            <span
+              className={`absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background ${
+                r.actorType === "agent" ? "bg-accent" : r.actorType === "provider" ? "bg-warning" : r.actorType === "human" ? "bg-sky-300" : "bg-slate-500"
+              }`}
+              aria-hidden
+            />
+            <p className="text-sm">
+              <span className={`font-medium ${ACTOR_CLASS[r.actorType] ?? ""}`}>{r.actor}</span>{" "}
+              <span className="font-mono text-xs text-muted">{r.action}</span>
+              {r.afterState && <span className={`text-xs ${STATE_CLASS[r.afterState] ?? "text-muted"}`}> → {pretty(r.afterState)}</span>}
+            </p>
+            <p className="line-clamp-2 text-xs text-muted">{r.subject}</p>
+            {r.details && <p className="line-clamp-2 text-xs text-muted/80">{r.details}</p>}
+            <p className="text-[11px] text-muted/70">{timeText(r.at)}</p>
+          </li>
+        ))}
+      </ol>
+      {rows.length > limit && (
+        <button type="button" onClick={() => setLimit((l) => l + 25)} className="mt-3 w-full rounded-lg bg-surface py-2 text-sm text-muted">
+          Show more ({rows.length - limit} older)
+        </button>
+      )}
     </div>
   );
 }
@@ -124,6 +202,11 @@ export function ActivityGrid({ rows }: { rows: ActivityGridRow[] }) {
   const [actor, setActor] = useState<(typeof ACTORS)[number]["key"]>("all");
   const [search, setSearch] = useState("");
   const shown = useMemo(() => (actor === "all" ? rows : rows.filter((r) => r.actorType === actor)), [rows, actor]);
+  // The phone timeline applies the search itself; the grid uses AG Grid's quick filter.
+  const searched = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? shown.filter((r) => `${r.actor} ${r.action} ${r.subject} ${r.details}`.toLowerCase().includes(q)) : shown;
+  }, [shown, search]);
   const columns = useMemo<ColDef<ActivityGridRow>[]>(
     () => [
       { field: "at", headerName: "Time", valueFormatter: time, minWidth: 160, sort: "desc" },
@@ -145,14 +228,14 @@ export function ActivityGrid({ rows }: { rows: ActivityGridRow[] }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="Filter by actor type" className="flex flex-wrap gap-1 rounded-full bg-surface p-1">
+        <div role="group" aria-label="Filter by actor type" className="flex max-w-full gap-1 overflow-x-auto rounded-full bg-surface p-1">
           {ACTORS.map((a) => (
             <button
               key={a.key}
               type="button"
               aria-pressed={actor === a.key}
               onClick={() => setActor(a.key)}
-              className={`rounded-full px-3 py-1 text-sm ${actor === a.key ? "bg-accent text-background" : "text-muted hover:text-foreground"}`}
+              className={`shrink-0 rounded-full px-3 py-1 text-sm ${actor === a.key ? "bg-accent text-background" : "text-muted hover:text-foreground"}`}
             >
               {a.label}
             </button>
@@ -167,7 +250,8 @@ export function ActivityGrid({ rows }: { rows: ActivityGridRow[] }) {
           className="min-w-0 flex-1 rounded-lg border border-surface-2 bg-background px-3 py-1.5 text-sm focus:border-accent focus:outline-none sm:max-w-xs"
         />
       </div>
-      <div>
+      <ActivityTimeline rows={searched} />
+      <div className="hidden md:block">
         <AgGridReact<ActivityGridRow>
           theme={theme}
           rowData={shown}

@@ -10,6 +10,7 @@ import { getMission, matchesFor } from "@/lib/missions";
 import { formatUsd } from "@/lib/money";
 import { getObligationForMission } from "@/lib/payments/queries";
 import { getSubmissions, type Submission } from "@/lib/evidence";
+import { LazyMap, type MapPoint } from "@/components/map/LazyMap";
 
 export default function MissionPage({ params }: PageProps<"/missions/[id]">) {
   return (
@@ -137,6 +138,29 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
 
       <aside className="space-y-3" aria-labelledby="match-heading">
         <h2 id="match-heading" className="font-semibold">Operator matching</h2>
+        <LazyMap
+          points={[
+            { id: m.id, lat: m.lat, lng: m.lng, kind: "mission", label: m.title, sub: m.location_name, reward: formatUsd(m.reward_minor).replace(".00", ""), highlight: true },
+            ...matches.map(
+              (r): MapPoint => ({
+                id: r.operator.user_id,
+                lat: r.operator.lat,
+                lng: r.operator.lng,
+                kind: "operator",
+                label: r.operator.display_name,
+                sub: r.eligible ? `${formatDistance(r.distanceMeters)} · score ${r.score.toFixed(2)}` : `${formatDistance(r.distanceMeters)} · ${r.exclusion}`,
+                eligible: r.eligible,
+                radius: r.operator.radius_meters,
+                highlight: r.operator.user_id === persona.userId,
+              }),
+            ),
+          ]}
+        />
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+          <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-accent" />Eligible operator (dashed: service area)</span>
+          <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-slate-500" />Not eligible</span>
+          {isOperator && <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-sky-300" />You</span>}
+        </p>
         <p className="text-sm text-muted">Ranked live: proximity 35%, availability 25%, skills 20%, reliability 10%, deadline fit 10%.</p>
         <ol className="space-y-2">
           {matches.map((r, i) => (

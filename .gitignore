@@ -24,3 +24,6 @@ scripts/__pycache__/
 npm-debug.log*
 /coverage
 .vercel
+
+# Copied from node_modules on install (scripts/copy-map-worker.mjs)
+/public/maplibre-gl-worker.mjs

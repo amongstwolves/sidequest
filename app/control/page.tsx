@@ -47,9 +47,11 @@ async function Control() {
 
   return (
     <div className="space-y-8">
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      {/* Phones: a swipeable strip of stat cards; larger screens: a grid. */}
+      <dl className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-6">
+
         {stats.map((s) => (
-          <Card key={s.label} className="space-y-1 !p-4">
+          <Card key={s.label} className="min-w-[9.5rem] shrink-0 snap-start space-y-1 !p-4 sm:min-w-0">
             <dt className="text-xs text-muted">{s.label}</dt>
             <dd className="text-xl">{s.value}</dd>
             {s.hint && <dd className="text-xs text-muted">{s.hint}</dd>}

@@ -12,6 +12,8 @@ What works today:
 - [x] Deterministic policy gate: prohibited activities and spending limits, with visible refusals.
 - [x] PayPal hold on plan approval; missions publish only after the authorization succeeds.
 - [x] Live operator matching (distance, availability, skills, reliability, deadline) and exclusive accept.
+- [x] Map of missions, operators and service areas on OpenStreetMap data (MapLibre + OpenFreeMap tiles, no API key), with real place-name labels removed so only the fictional demo neighborhoods appear; map/list toggle.
+- [x] Mobile-first layout: bottom tab bar, card and timeline views of Mission Control on phones.
 - [x] Photo proof reviewed by Claude against the mission checklist, with a correction cycle.
 - [x] Approve & pay: partial capture → PayPal Payouts to the operator → unused budget voided.
 - [x] AI agent access over MCP, held to the agent's spending policy.
