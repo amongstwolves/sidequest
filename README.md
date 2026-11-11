@@ -99,10 +99,10 @@ This is a PayPal **sandbox** test account; it only works on sandbox.paypal.com a
 
 ### AI agent over MCP (optional)
 
-Connect any MCP client to `https://sidequest-9qkp.onrender.com/api/mcp` with `Authorization: Bearer <JUDGE_AGENT_KEY>`, for example:
+Connect any MCP client to `https://sidequest-9qkp.onrender.com/api/mcp` with `Authorization: Bearer sq_judge_393f5bdd119c8fd72fa22158c1a58553`, for example:
 
 ```bash
-claude mcp add --transport http sidequest https://sidequest-9qkp.onrender.com/api/mcp --header "Authorization: Bearer <JUDGE_AGENT_KEY>"
+claude mcp add --transport http sidequest https://sidequest-9qkp.onrender.com/api/mcp --header "Authorization: Bearer sq_judge_393f5bdd119c8fd72fa22158c1a58553"
 ```
 
 Then ask your agent to create a $250 objective (refused: over the $100 daily limit) and a $75 one (accepted; it then waits for the requester to approve the PayPal hold in the web app). The judge key is limited by the same spending policy, works only in the sandbox, and can be revoked on its own.
