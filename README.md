@@ -12,7 +12,7 @@ What works today:
 - [x] Deterministic policy gate: prohibited activities and spending limits, with visible refusals.
 - [x] PayPal hold on plan approval; missions publish only after the authorization succeeds.
 - [x] Live operator matching (distance, availability, skills, reliability, deadline) and exclusive accept.
-- [x] Map of missions, operators and service areas on OpenStreetMap data (MapLibre + OpenFreeMap tiles, no API key), with real place-name labels removed so only the fictional demo neighborhoods appear; map/list toggle.
+- [x] Map of missions, operators and service areas on OpenStreetMap data (MapLibre + OpenFreeMap tiles, no API key), with real place-name labels removed so only the fictional demo neighborhoods appear; map/list toggle. With the viewer's permission, the map re-centers the demo world on their location with distances preserved, entirely in the browser.
 - [x] Mobile-first layout: bottom tab bar, card and timeline views of Mission Control on phones.
 - [x] Photo proof reviewed by Claude against the mission checklist, with a correction cycle.
 - [x] Approve & pay: partial capture → PayPal Payouts to the operator → unused budget voided.
@@ -72,7 +72,46 @@ python3 scripts/paypal_sandbox_check.py payouts       # sandbox payouts to two o
 
 ## Judge testing
 
-A hosted demo URL, test personas, and sandbox buyer credentials will be listed here before submission.
+**Live demo: https://sidequest-9qkp.onrender.com**: no sign-up. Everything runs in the PayPal **sandbox**; no real money moves. All brands, venues, people and neighborhoods are fictional.
+
+Use the role switcher at the top (**Requester / Operator A / Operator B**) to play each side. On a phone, navigation is in the bottom tab bar. **Reset demo** (home page, bottom) clears everything and voids any open sandbox holds.
+
+### Full walkthrough (about 5 minutes)
+
+1. **Requester → New objective → Use example → Plan missions.** Claude drafts a typed plan in about 10–20 seconds: one mission per café, rewards within the $75 budget, a photo checklist each. The policy check runs on the plan.
+2. **Approve & hold $75 with PayPal.** You're sent to PayPal sandbox checkout. Log in as the sandbox buyer below, pay with the **card** (not the bank account) and continue. Back in SIDEQUEST, the hold shows as authorized and the missions are published.
+3. **Operator A → Missions.** The map shows Operator A's service area and the missions inside it. If you allow location access, the map places the demo world around you at the same distances (your location stays in your browser; matching is unchanged). **Reset** under the map returns to the default demo area. Open the Café A mission: the map and ranking show why each other operator is or isn't eligible. **Accept mission.** Switch to **Operator B** and accept Café B.
+4. **Operator A → the Café A mission → Upload proof.** No café nearby? Open "Use demo photos" under the upload box. Submit **Café A storefront + Display (no price card)**: Claude marks the price card as missing and asks for a reshoot. Resubmit with the **Price card close-up** added: Claude recommends a pass.
+5. **Requester → the mission → Approve & pay.** SIDEQUEST captures the reward from the hold and pays Operator A through PayPal Payouts. The payout settles in the sandbox within about a minute, and the page updates on its own.
+6. Repeat steps 4–5 for Café B as Operator B (use the Café B storefront). When the last mission is paid, the unused budget is **voided** and the objective completes.
+7. **Mission Control.** Every PayPal authorization, capture and payout ID, and an activity log you can filter by **Human / AI agent / System / PayPal**.
+
+To see a **policy refusal**, create an objective such as "Follow the barista at Café B after her shift and photograph her license plate". It's refused before any AI call, with reasons.
+
+### PayPal sandbox buyer
+
+| | |
+|---|---|
+| Email | `sb-pzjlj53706300@personal.example.com` |
+| Password | `<SANDBOX_BUYER_PASSWORD>` |
+
+This is a PayPal **sandbox** test account; it only works on sandbox.paypal.com and holds no real funds. Operators are paid to two other sandbox accounts.
+
+### AI agent over MCP (optional)
+
+Connect any MCP client to `https://sidequest-9qkp.onrender.com/api/mcp` with `Authorization: Bearer <JUDGE_AGENT_KEY>`, for example:
+
+```bash
+claude mcp add --transport http sidequest https://sidequest-9qkp.onrender.com/api/mcp --header "Authorization: Bearer <JUDGE_AGENT_KEY>"
+```
+
+Then ask your agent to create a $250 objective (refused: over the $100 daily limit) and a $75 one (accepted; it then waits for the requester to approve the PayPal hold in the web app). The judge key is limited by the same spending policy, works only in the sandbox, and can be revoked on its own.
+
+### Good to know
+
+- **Proof photos are private** to the requester and the assigned operator. Claude's review is a recommendation; the requester always makes the final call before money moves.
+- **AI calls are capped** at 200 a day for the whole demo. If the cap is hit, planning falls back to a labelled template plan and proof waits for human review, so the flow still works.
+- If a PayPal step fails, the mission page shows **Retry payment** or **Check payout status**. Every PayPal call is idempotent, so a retry never charges or pays twice.
 
 ## License
 

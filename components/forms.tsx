@@ -128,6 +128,14 @@ export function PayoutAutoCheck({ obligationId }: { obligationId: string }) {
   return <p className="text-xs text-muted" aria-live="polite">Waiting for PayPal to confirm the payout… checking every 5 seconds.</p>;
 }
 
+// Fictional proof photos in public/demo-photos for judges testing without a real café.
+const DEMO_PHOTOS = [
+  { file: "storefront-a.jpg", label: "Café A storefront" },
+  { file: "storefront-b.jpg", label: "Café B storefront" },
+  { file: "display-no-price-card.jpg", label: "Display (no price card)" },
+  { file: "price-card-closeup.jpg", label: "Price card close-up" },
+];
+
 /** Downscale to max 1600px JPEG in the browser so uploads stay small and EXIF location data is dropped. */
 async function shrink(file: File): Promise<File> {
   const bitmap = await createImageBitmap(file);
@@ -182,6 +190,17 @@ export function EvidenceUpload({ missionId, resubmit }: { missionId: string; res
         />
         <span className="block text-xs text-muted">Up to 4 photos. They&apos;re resized on your device; location data is removed.</span>
       </label>
+      <details className="text-xs text-muted">
+        <summary className="cursor-pointer hover:text-foreground">No café nearby? Use demo photos</summary>
+        <p className="mt-2">Download, then pick them above. Submit without the price card first to see Claude ask for a reshoot.</p>
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {DEMO_PHOTOS.map((p) => (
+            <li key={p.file}>
+              <a href={`/demo-photos/${p.file}`} download className="text-accent hover:underline">{p.label}</a>
+            </li>
+          ))}
+        </ul>
+      </details>
       {photos.length > 0 && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {photos.map((p) => (

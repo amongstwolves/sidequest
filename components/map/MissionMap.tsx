@@ -1,7 +1,7 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
 
@@ -91,7 +91,9 @@ function popupNode(title: string, sub?: string, href?: string): HTMLElement {
   return root;
 }
 
-export default function MissionMap({ points, className = "h-72" }: { points: MapPoint[]; className?: string }) {
+type Hood = { name: string; lat: number; lng: number };
+
+function MapCanvas({ points, hoods, className = "h-72" }: { points: MapPoint[]; hoods: Hood[]; className?: string }) {
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -182,7 +184,7 @@ export default function MissionMap({ points, className = "h-72" }: { points: Map
           hover.remove();
         });
 
-        for (const n of NEIGHBORHOODS) {
+        for (const n of hoods) {
           markers.push(new maplibregl.Marker({ element: el("sq-hood", n.name) }).setLngLat([n.lng, n.lat]).addTo(m));
         }
         for (const p of points.filter((x) => x.kind === "mission")) {
@@ -217,7 +219,135 @@ export default function MissionMap({ points, className = "h-72" }: { points: Map
       markers.forEach((mk) => mk.remove());
       map?.remove();
     };
-  }, [points]);
+  }, [points, hoods]);
 
   return <div ref={container} className={`overflow-hidden rounded-xl border border-surface-2 bg-[#0f1724] ${className}`} />;
+}
+
+// ---------------------------------------------------------------------------
+// "Near me": show the demo world around the viewer's real location.
+// The seeded demo city is centered here; every point keeps its east/north offset in meters,
+// so distances, directions and service areas are unchanged. Matching still runs server-side on
+// the seeded positions, so rankings are identical for everyone. The location stays in the browser.
+// ---------------------------------------------------------------------------
+
+const DEMO_CENTER = { lat: 35.2271, lng: -80.8431 };
+const ANCHOR_KEY = "sq_map_anchor";
+const M_PER_DEG = 111_320;
+
+type Anchor = { lat: number; lng: number };
+
+function relocate<T extends { lat: number; lng: number }>(p: T, anchor: Anchor | null): T {
+  if (!anchor) return p;
+  const north = (p.lat - DEMO_CENTER.lat) * M_PER_DEG;
+  const east = (p.lng - DEMO_CENTER.lng) * M_PER_DEG * Math.cos((DEMO_CENTER.lat * Math.PI) / 180);
+  return {
+    ...p,
+    lat: anchor.lat + north / M_PER_DEG,
+    lng: anchor.lng + east / (M_PER_DEG * Math.cos((anchor.lat * Math.PI) / 180)),
+  };
+}
+
+function readAnchor(): Anchor | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(ANCHOR_KEY) ?? "null");
+    return v && typeof v.lat === "number" && typeof v.lng === "number" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeAnchor(a: Anchor | null) {
+  try {
+    if (a) localStorage.setItem(ANCHOR_KEY, JSON.stringify(a));
+    else localStorage.removeItem(ANCHOR_KEY);
+  } catch {
+    // Private mode or blocked storage: the choice just isn't remembered.
+  }
+}
+
+// Set when the viewer taps "Reset": stop asking for location on this device until they opt back in.
+const OFF_KEY = "sq_map_location_off";
+
+function locationOff(): boolean {
+  try {
+    return localStorage.getItem(OFF_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setLocationOff(off: boolean) {
+  try {
+    if (off) localStorage.setItem(OFF_KEY, "1");
+    else localStorage.removeItem(OFF_KEY);
+  } catch {
+    // Storage blocked: the choice lasts for this page only.
+  }
+}
+
+export default function MissionMap({ points, className = "h-72" }: { points: MapPoint[]; className?: string }) {
+  // The map is client-only (LazyMap disables SSR), so saved choices can be read up front.
+  // A remembered location renders immediately; the live lookup below refreshes it.
+  const [anchor, setAnchor] = useState<Anchor | null>(() => (locationOff() ? null : readAnchor()));
+  const [off, setOff] = useState(locationOff);
+  const [denied, setDenied] = useState(() => !("geolocation" in navigator));
+
+  const shown = useMemo(() => points.map((p) => relocate(p, anchor)), [points, anchor]);
+  const hoods = useMemo(() => NEIGHBORHOODS.map((n) => relocate(n, anchor)), [anchor]);
+
+  function locate() {
+    if (!("geolocation" in navigator)) return; // `denied` already starts true in this case
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        // ~100 m precision is plenty for placing the demo; don't keep more than needed.
+        const a = { lat: Number(pos.coords.latitude.toFixed(3)), lng: Number(pos.coords.longitude.toFixed(3)) };
+        writeAnchor(a);
+        setAnchor(a);
+        setDenied(false);
+      },
+      () => setDenied(true),
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 600_000 },
+    );
+  }
+
+  // Ask automatically when the map opens (the browser only prompts once per site).
+  useEffect(() => {
+    if (!off) locate();
+  }, [off]);
+
+  function reset() {
+    setLocationOff(true);
+    writeAnchor(null);
+    setAnchor(null);
+    setOff(true);
+  }
+
+  function useMyLocation() {
+    setLocationOff(false);
+    setDenied(false);
+    setOff(false); // the effect above runs locate()
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <MapCanvas points={shown} hoods={hoods} className={className} />
+      <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-muted" aria-live="polite">
+        <span>
+          {anchor
+            ? "Demo placed around you at real distances. Your location stays on this device."
+            : denied
+              ? "Location unavailable, so the default demo area is shown."
+              : off
+                ? "Showing the default demo area."
+                : "Finding your location to place the demo around you…"}
+        </span>
+        {anchor ? (
+          <button type="button" onClick={reset} className="text-accent hover:underline">Reset</button>
+        ) : off ? (
+          <button type="button" onClick={useMyLocation} className="text-accent hover:underline">Use my location</button>
+        ) : null}
+      </p>
+    </div>
+  );
 }

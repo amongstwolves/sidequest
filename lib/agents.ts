@@ -23,11 +23,16 @@ function digest(value: string): Buffer {
   return createHash("sha256").update(value).digest();
 }
 
-/** Constant-time check of a Bearer token against MCP_AGENT_API_KEY. */
+/**
+ * Constant-time check of a Bearer token against MCP_AGENT_API_KEY, which may hold several
+ * comma-separated keys (e.g. your own plus a judge key that can be revoked on its own).
+ */
 export function authenticateAgent(authorization: string | null): boolean {
-  const expected = process.env.MCP_AGENT_API_KEY;
-  if (!expected || !authorization?.startsWith("Bearer ")) return false;
-  return timingSafeEqual(digest(authorization.slice(7).trim()), digest(expected));
+  const keys = (process.env.MCP_AGENT_API_KEY ?? "").split(",").map((k) => k.trim()).filter(Boolean);
+  if (keys.length === 0 || !authorization?.startsWith("Bearer ")) return false;
+  const presented = digest(authorization.slice(7).trim());
+  // Compare against every key so timing doesn't reveal which one matched.
+  return keys.map((k) => timingSafeEqual(presented, digest(k))).some(Boolean);
 }
 
 export async function loadAgent(agentId = DEMO_AGENT_ID): Promise<AgentContext | null> {
