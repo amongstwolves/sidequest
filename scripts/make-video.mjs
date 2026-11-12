@@ -4,7 +4,7 @@
 //   node scripts/make-video.mjs            -> storyboard/video/sidequest-demo.mp4
 //   VOICE=Samantha RATE=185 node scripts/make-video.mjs
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import puppeteer from "puppeteer-core";
 
@@ -18,7 +18,7 @@ mkdirSync(OUT, { recursive: true });
 const OP = "FOR OPERATORS";
 const BRAND = "FOR BRANDS";
 const SLIDES = [
-  { tag: OP, title: "YOUR CITY HAS SIDE QUESTS.", imgs: ["01a-riley-home-mission-near", "01-riley-map"], vo: "There's thirty bucks two blocks from you. Want it?" },
+  { tag: OP, title: "YOUR CITY HAS SIDE QUESTS.", imgs: ["10-riley-home-offer", "01-riley-map"], vo: "There's thirty bucks two blocks from you. Want it?" },
   {
     tag: BRAND,
     title: "AI can plan the work.",
@@ -44,7 +44,7 @@ const SLIDES = [
     tag: OP,
     title: "ACCEPTED.",
     sub: "Ranked by distance, skills and reliability.",
-    imgs: ["05b-mission-ranking", "05c-riley-accepted"],
+    imgs: ["10-mission-offer-top", "10-riley-accepted"],
     vo: "Riley. Northgate Mill. Mission drops: thirty dollars, point two miles. Ranked first: closest, right skills, top reliability. Tap. It's his.",
   },
   {
@@ -115,6 +115,12 @@ ${s.end ? `<p class="url">sidequest-9qkp.onrender.com</p><p class="small">PayPal
 
 const run = (cmd, args) => execFileSync(cmd, args, { stdio: ["ignore", "pipe", "pipe"] }).toString();
 
+if (process.argv.includes("--lines")) {
+  // Print the voiceover lines with the voice each should use, for generating clips elsewhere.
+  for (const [i, s] of SLIDES.entries()) console.log(`vo${String(i).padStart(2, "0")}\t${s.tag === OP ? "operator" : "brand"}\t${s.vo}`);
+  process.exit(0);
+}
+
 // 1. Slides
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ["--allow-file-access-from-files"] });
 const page = await browser.newPage();
@@ -133,8 +139,18 @@ const FPS = 30;
 const clips = [];
 for (const [i, s] of SLIDES.entries()) {
   const n = String(i).padStart(2, "0");
-  const aiff = join(OUT, `vo${n}.aiff`);
-  run("say", ["-v", VOICE, "-r", RATE, "-o", aiff, s.vo]);
+  // Prefer a recorded/generated clip (e.g. ElevenLabs) at storyboard/video/voice/vo<NN>.mp3; else macOS say.
+  const custom = join(OUT, "voice", `vo${n}.mp3`);
+  let aiff = custom;
+  if (!existsSync(custom)) {
+    aiff = join(OUT, `vo${n}.aiff`);
+    if (process.env.SILENT_MISSING) {
+      // No clip for this scene: hold the caption on screen in silence instead of switching voices.
+      run("ffmpeg", ["-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", "2.4", aiff]);
+    } else {
+      run("say", ["-v", VOICE, "-r", RATE, "-o", aiff, s.vo]);
+    }
+  }
   const voDur = parseFloat(run("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", aiff]));
   const lead = 0.35;
   const dur = +(voDur + lead + (s.end ? 2.5 : 0.7)).toFixed(2);

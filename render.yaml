@@ -4,9 +4,8 @@ services:
   - type: web
     name: sidequest
     runtime: node
-    # Free plan sleeps after inactivity (slow first load for judges).
-    # Switch to "starter" for the judging period (Dec 1–15).
-    plan: free
+    # Paid compute plan (formerly "starter"): never sleeps, so judges get a fast first load.
+    plan: 0.5c-512mb
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health

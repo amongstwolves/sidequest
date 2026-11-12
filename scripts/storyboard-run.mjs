@@ -37,10 +37,10 @@ try {
   await sleep(3000);
 
   if (cmd === "accept") {
-    await scrollToText("Accept mission");
+    await page.evaluate(() => window.scrollTo(0, 0));
     await sleep(500);
     await snap("-before");
-    await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.innerText.trim() === "Accept mission")?.click());
+    await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.innerText.trim().startsWith("Accept for"))?.click());
     await sleep(5000);
     await page.evaluate(() => window.scrollTo(0, 0));
     await sleep(500);
