@@ -99,3 +99,19 @@ body {
 .maplibregl-ctrl-attrib a {
   color: #94a3b8;
 }
+
+/* Moments: offer accepted, payout received */
+@keyframes sq-pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes sq-sheet { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes sq-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sq-draw { to { stroke-dashoffset: 0; } }
+@keyframes sq-ring { 0% { transform: scale(0.6); opacity: 0.7; } 100% { transform: scale(1.8); opacity: 0; } }
+.sq-pop { animation: sq-pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.sq-sheet { animation: sq-sheet 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.sq-fade { animation: sq-fade 0.3s ease-out both; }
+.sq-draw { stroke-dasharray: 48; stroke-dashoffset: 48; animation: sq-draw 0.5s 0.35s ease-out forwards; }
+.sq-ring { animation: sq-ring 1.2s 0.3s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .sq-pop, .sq-sheet, .sq-fade, .sq-ring { animation: none; }
+  .sq-draw { animation: none; stroke-dashoffset: 0; }
+}

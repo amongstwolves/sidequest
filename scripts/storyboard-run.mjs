@@ -47,6 +47,27 @@ try {
     await snap("-accepted");
   }
 
+  if (cmd === "approve") {
+    // Requester approves a finished mission: capture, PayPal payout, then wait for PAID.
+    await scrollToText("Proof is in");
+    await sleep(500);
+    await snap("-approve");
+    await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.innerText.trim().startsWith("Approve & pay"))?.click());
+    await sleep(9000);
+    await scrollToText("Payment to");
+    await sleep(500);
+    await snap("-pending");
+    for (let i = 0; i < 40; i++) {
+      await sleep(3000);
+      const paid = await page.evaluate(() => /Payment to[\s\S]{0,40}Paid/.test(document.querySelector("main")?.innerText ?? ""));
+      if (paid) break;
+    }
+    await sleep(1000);
+    await scrollToText("Payment to");
+    await sleep(500);
+    await snap("-paid");
+  }
+
   if (cmd === "proof") {
     const list = photos.split(",");
     // Load the site's demo photos into the upload input, as a phone's photo picker would.

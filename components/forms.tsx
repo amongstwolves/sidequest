@@ -75,15 +75,25 @@ export function ApprovePlanButton({ objectiveId, totalLabel }: { objectiveId: st
   );
 }
 
-export function AcceptMissionButton({ missionId }: { missionId: string }) {
+/** On phones the Accept action is pinned above the tab bar so it's always one tap away. */
+export function AcceptMissionButton({ missionId, amountLabel, meta }: { missionId: string; amountLabel: string; meta?: string }) {
   const [state, action, pending] = useActionState<AcceptState, FormData>(acceptMissionAction, {});
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="mission_id" value={missionId} />
-      <button type="submit" disabled={pending || state.ok} className="w-full rounded-lg bg-accent px-4 py-2.5 font-semibold text-background disabled:opacity-60 sm:w-auto">
-        {pending ? "Accepting…" : "Accept mission"}
-      </button>
       {state.error && <p role="alert" className="rounded-lg bg-error/15 px-3 py-2 text-sm text-error">{state.error}</p>}
+      <div className="h-24 md:hidden" aria-hidden />
+      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-[1050] border-t border-surface-2 bg-background/95 px-4 py-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+        <div className="mx-auto flex max-w-md items-center gap-3 md:max-w-none">
+          <div className="min-w-0 flex-1 md:hidden">
+            <p className="text-xl font-bold leading-tight text-accent">{amountLabel}</p>
+            {meta && <p className="truncate text-xs text-muted">{meta}</p>}
+          </div>
+          <button type="submit" disabled={pending || state.ok} className="flex-1 rounded-xl bg-accent px-5 py-3 text-base font-bold text-background shadow-lg shadow-accent/20 transition active:scale-[0.98] disabled:opacity-60 md:flex-none md:rounded-lg md:py-2.5 md:shadow-none">
+            {pending ? "Accepting…" : `Accept for ${amountLabel}`}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }

@@ -11,6 +11,7 @@ import { formatUsd } from "@/lib/money";
 import { getObligationForMission } from "@/lib/payments/queries";
 import { getSubmissions, type Submission } from "@/lib/evidence";
 import { LazyMap, type MapPoint } from "@/components/map/LazyMap";
+import { PaidSheet } from "@/components/PaidSheet";
 
 export default function MissionPage({ params }: PageProps<"/missions/[id]">) {
   return (
@@ -32,8 +33,17 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
   const canSeeProof = mine || persona.key === "requester";
   const canSubmit = mine && ["ACCEPTED", "IN_PROGRESS", "CHANGES_REQUESTED"].includes(m.state);
 
+  const showPaid = mine && m.state === "PAID" && obligation;
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
+      {showPaid && (
+        <PaidSheet
+          missionId={m.id}
+          amountMinor={obligation.amount_minor}
+          missionTitle={m.title}
+          payoutId={obligation.payout_item_id ?? obligation.payout_batch_id ?? "—"}
+        />
+      )}
       <div className="space-y-5">
         <div className="space-y-2">
           <Link href={isOperator ? "/me" : `/objectives/${m.objective_id}`} className="text-sm text-muted hover:text-foreground">
@@ -45,6 +55,15 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
             <StateBadge state={m.state} />
           </div>
           <h1 className="text-2xl font-bold">{m.title}</h1>
+          {mine && m.state === "ACCEPTED" && submissions.length === 0 && (
+            <div className="sq-pop flex items-center gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-lg font-bold text-background" aria-hidden>✓</span>
+              <div>
+                <p className="font-bold">It&apos;s yours.</p>
+                <p className="text-sm text-muted">Next: go to {m.location_name} and take the {m.rubric_json.items.length} checklist photos below.</p>
+              </div>
+            </div>
+          )}
           <p className="text-muted">{m.description}</p>
         </div>
 
@@ -125,7 +144,11 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
             ) : m.state === "PUBLISHED" && myMatch?.eligible ? (
               <>
                 <p>Accepting is voluntary and exclusive: the first eligible operator to accept gets it, at the reward shown.</p>
-                <AcceptMissionButton missionId={m.id} />
+                <AcceptMissionButton
+                  missionId={m.id}
+                  amountLabel={formatUsd(m.reward_minor).replace(".00", "")}
+                  meta={[myMatch && formatDistance(myMatch.distanceMeters), `due ${formatDeadline(m.deadline)}`].filter(Boolean).join(" · ")}
+                />
               </>
             ) : m.state !== "PUBLISHED" ? (
               <p className="text-muted">{m.assignee_name ? `Accepted by ${m.assignee_name}.` : "No longer open."}</p>
