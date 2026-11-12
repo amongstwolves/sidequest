@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { AiBadge, Card, formatDeadline, Money, StateBadge } from "@/components/ui";
+import { OfferList } from "@/components/OfferCard";
 import { currentPersona } from "@/lib/demo/personas";
 import { formatDistance } from "@/lib/geo";
 import { loadOperators, missionFeed } from "@/lib/missions";
@@ -94,13 +95,12 @@ function FeedLists({ isOperator, mine, open }: { isOperator: boolean; mine: Awai
             {!isOperator && <Link href="/objectives/new" className="text-accent hover:underline">Create an objective →</Link>}
           </Card>
         ) : (
-          <MissionList items={open} />
+          <OfferList items={open} />
         )}
       </section>
     </div>
   );
 }
-
 function MissionList({ items }: { items: Awaited<ReturnType<typeof missionFeed>> }) {
   return (
     <ul className="grid gap-3 md:grid-cols-2">

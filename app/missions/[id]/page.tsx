@@ -12,6 +12,8 @@ import { getObligationForMission } from "@/lib/payments/queries";
 import { getSubmissions, type Submission } from "@/lib/evidence";
 import { LazyMap, type MapPoint } from "@/components/map/LazyMap";
 import { PaidSheet } from "@/components/PaidSheet";
+import { AcceptedSheet } from "@/components/AcceptedSheet";
+import { timeLeft } from "@/components/OfferCard";
 
 export default function MissionPage({ params }: PageProps<"/missions/[id]">) {
   return (
@@ -36,6 +38,16 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
   const showPaid = mine && m.state === "PAID" && obligation;
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
+      {mine && m.state === "ACCEPTED" && submissions.length === 0 && (
+        <AcceptedSheet
+          missionId={m.id}
+          rewardLabel={formatUsd(m.reward_minor).replace(".00", "")}
+          locationName={m.location_name}
+          address={m.address_label}
+          due={formatDeadline(m.deadline)}
+          checklist={m.rubric_json.items.map((r) => r.requirement)}
+        />
+      )}
       {showPaid && (
         <PaidSheet
           missionId={m.id}
@@ -69,7 +81,13 @@ async function Mission({ params }: Pick<PageProps<"/missions/[id]">, "params">) 
 
         <Card className="grid gap-4 sm:grid-cols-3">
           <div><p className="text-sm text-muted">Reward</p><Money minor={m.reward_minor} className="text-2xl text-accent" /></div>
-          <div><p className="text-sm text-muted">Due</p><p className="font-medium">{formatDeadline(m.deadline)}</p></div>
+          <div>
+            <p className="text-sm text-muted">Due</p>
+            <p className="font-medium">{formatDeadline(m.deadline)}</p>
+            {["PUBLISHED", "ACCEPTED", "IN_PROGRESS", "CHANGES_REQUESTED"].includes(m.state) && (
+              <p className="mt-1 inline-block rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-semibold text-warning">{timeLeft(m.deadline)}</p>
+            )}
+          </div>
           <div>
             <p className="text-sm text-muted">Location</p>
             <p className="font-medium">{m.location_name}</p>

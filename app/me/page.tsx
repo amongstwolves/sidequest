@@ -2,11 +2,12 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { AiBadge, Card, formatDeadline, Money, StateBadge } from "@/components/ui";
+import { Card, formatDeadline, Money, StateBadge } from "@/components/ui";
 import { LazyMap, type MapPoint } from "@/components/map/LazyMap";
+import { OfferList } from "@/components/OfferCard";
 import { currentPersona, hasChosenPersona } from "@/lib/demo/personas";
 import { formatDistance } from "@/lib/geo";
-import { loadOperators, missionFeed, operatorEarnings, type FeedItem } from "@/lib/missions";
+import { loadOperators, missionFeed, operatorEarnings } from "@/lib/missions";
 import { formatUsd } from "@/lib/money";
 
 // Operator home: what's near me, what I'm doing, what I've been paid.
@@ -136,7 +137,7 @@ async function Home() {
         {nearby.length === 0 ? (
           <Card className="text-muted">No open missions in your area right now. New ones appear here as soon as a requester&apos;s PayPal hold is approved.</Card>
         ) : (
-          <MissionCards items={nearby} />
+          <OfferList items={nearby} />
         )}
       </section>
 
@@ -167,32 +168,5 @@ async function Home() {
         )}
       </section>
     </div>
-  );
-}
-
-function MissionCards({ items }: { items: FeedItem[] }) {
-  return (
-    <ul className="grid gap-3 md:grid-cols-2">
-      {items.map(({ mission: m, match }) => (
-        <li key={m.id}>
-          <Link href={`/missions/${m.id}`} className="block rounded-xl bg-surface p-4 transition-colors hover:bg-surface-2/60">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold tracking-wider text-muted">{m.category}</span>
-                  <AiBadge ai={m.ai_created} />
-                </div>
-                <p className="font-semibold">{m.title}</p>
-                <p className="text-sm text-muted">
-                  {m.location_name}
-                  {match && ` · ${formatDistance(match.distanceMeters)}`} · due {formatDeadline(m.deadline)}
-                </p>
-              </div>
-              <Money minor={m.reward_minor} className="shrink-0 text-xl text-accent" />
-            </div>
-          </Link>
-        </li>
-      ))}
-    </ul>
   );
 }
